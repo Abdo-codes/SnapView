@@ -3,7 +3,8 @@ import Foundation
 struct ProjectInfo {
   let projectPath: String
   let workspacePath: String?
-  let appName: String
+  let appName: String          // Target/project name (e.g., "Tateemi")
+  let moduleName: String       // Swift module name (e.g., "تطعيمي")
   let testTargetName: String
   let sourceRoot: String
 }
@@ -57,12 +58,57 @@ enum ProjectDetector {
       .deletingPathExtension()
       .lastPathComponent
 
+    // Query the actual Swift module name from xcodebuild
+    let moduleName = detectModuleName(
+      scheme: appName,
+      projectPath: resolvedProject,
+      workspacePath: resolvedWorkspace
+    )
+
     return ProjectInfo(
       projectPath: resolvedProject,
       workspacePath: resolvedWorkspace,
       appName: appName,
+      moduleName: moduleName,
       testTargetName: testTarget ?? "\(appName)Tests",
       sourceRoot: cwd
     )
+  }
+
+  private static func detectModuleName(
+    scheme: String,
+    projectPath: String,
+    workspacePath: String?
+  ) -> String {
+    // Read PRODUCT_NAME directly from pbxproj — fast, no xcodebuild needed
+    let pbxprojPath = "\(projectPath)/project.pbxproj"
+    guard let content = try? String(contentsOfFile: pbxprojPath, encoding: .utf8) else {
+      return scheme
+    }
+
+    // Look for PRODUCT_MODULE_NAME first (explicit override)
+    for line in content.components(separatedBy: .newlines) {
+      let trimmed = line.trimmingCharacters(in: .whitespaces)
+      if trimmed.hasPrefix("PRODUCT_MODULE_NAME = ") {
+        let value = trimmed.dropFirst("PRODUCT_MODULE_NAME = ".count)
+          .trimmingCharacters(in: CharacterSet(charactersIn: "\";"))
+        if !value.isEmpty && !value.contains("$") { return value }
+      }
+    }
+
+    // Fall back to PRODUCT_NAME from the app target's config
+    // Find the first PRODUCT_NAME that isn't $(TARGET_NAME)
+    for line in content.components(separatedBy: .newlines) {
+      let trimmed = line.trimmingCharacters(in: .whitespaces)
+      if trimmed.hasPrefix("PRODUCT_NAME = ") {
+        let value = trimmed.dropFirst("PRODUCT_NAME = ".count)
+          .trimmingCharacters(in: CharacterSet(charactersIn: "\";"))
+        if !value.isEmpty && !value.contains("$") {
+          return value
+        }
+      }
+    }
+
+    return scheme
   }
 }

@@ -56,7 +56,7 @@ struct RenderCommand: ParsableCommand {
       let source = (try? String(contentsOfFile: fullPath, encoding: .utf8)) ?? ""
       return ImportScanner.scan(source: source)
     }
-    let registry = RegistryGenerator.generate(entries: matched, imports: allImports, appModule: projectInfo.appName)
+    let registry = RegistryGenerator.generate(entries: matched, imports: allImports, appModule: projectInfo.moduleName)
     let registryPath = "\(projectInfo.sourceRoot)/\(projectInfo.testTargetName)/SnapViewRegistry.swift"
     try registry.write(toFile: registryPath, atomically: true, encoding: .utf8)
 
