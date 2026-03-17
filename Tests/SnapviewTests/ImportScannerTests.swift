@@ -45,4 +45,38 @@ struct ImportScannerTests {
     let imports = ImportScanner.scan(source: source)
     #expect(imports.isEmpty)
   }
+
+  @Test("returns empty for empty source")
+  func emptySource() {
+    let imports = ImportScanner.scan(source: "")
+    #expect(imports.isEmpty)
+  }
+
+  @Test("collects import preceded by a tab")
+  func tabBeforeImport() {
+    let source = "\timport SwiftUI"
+    let imports = ImportScanner.scan(source: source)
+    #expect(imports.contains("import SwiftUI"))
+  }
+
+  @Test("collects import preceded by multiple spaces")
+  func multipleSpacesBeforeImport() {
+    let source = "    import SwiftUI"
+    let imports = ImportScanner.scan(source: source)
+    #expect(imports.contains("import SwiftUI"))
+  }
+
+  @Test("collects import with submodule")
+  func submoduleImport() {
+    let source = "import Foundation.NSObject"
+    let imports = ImportScanner.scan(source: source)
+    #expect(imports == ["import Foundation.NSObject"])
+  }
+
+  @Test("preserves duplicate imports")
+  func duplicateImports() {
+    let source = "import SwiftUI\nimport SwiftUI"
+    let imports = ImportScanner.scan(source: source)
+    #expect(imports == ["import SwiftUI", "import SwiftUI"])
+  }
 }
