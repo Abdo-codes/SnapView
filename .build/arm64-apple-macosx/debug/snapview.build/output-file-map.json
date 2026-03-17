@@ -1,0 +1,117 @@
+{
+  "": {
+    "swift-dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/master.swiftdeps"
+  },
+  "/Users/abdoelrhman/Developer/side/snapview/Sources/snapview/Commands/CleanCommand.swift": {
+    "dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/CleanCommand.d",
+    "object": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/CleanCommand.swift.o",
+    "swiftmodule": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/CleanCommand~partial.swiftmodule",
+    "swift-dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/CleanCommand.swiftdeps",
+    "diagnostics": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/CleanCommand.dia"
+  },
+  "/Users/abdoelrhman/Developer/side/snapview/Sources/snapview/Commands/InitCommand.swift": {
+    "dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/InitCommand.d",
+    "object": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/InitCommand.swift.o",
+    "swiftmodule": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/InitCommand~partial.swiftmodule",
+    "swift-dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/InitCommand.swiftdeps",
+    "diagnostics": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/InitCommand.dia"
+  },
+  "/Users/abdoelrhman/Developer/side/snapview/Sources/snapview/Commands/ListCommand.swift": {
+    "dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/ListCommand.d",
+    "object": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/ListCommand.swift.o",
+    "swiftmodule": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/ListCommand~partial.swiftmodule",
+    "swift-dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/ListCommand.swiftdeps",
+    "diagnostics": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/ListCommand.dia"
+  },
+  "/Users/abdoelrhman/Developer/side/snapview/Sources/snapview/Commands/RenderAllCommand.swift": {
+    "dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/RenderAllCommand.d",
+    "object": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/RenderAllCommand.swift.o",
+    "swiftmodule": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/RenderAllCommand~partial.swiftmodule",
+    "swift-dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/RenderAllCommand.swiftdeps",
+    "diagnostics": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/RenderAllCommand.dia"
+  },
+  "/Users/abdoelrhman/Developer/side/snapview/Sources/snapview/Commands/RenderCommand.swift": {
+    "dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/RenderCommand.d",
+    "object": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/RenderCommand.swift.o",
+    "swiftmodule": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/RenderCommand~partial.swiftmodule",
+    "swift-dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/RenderCommand.swiftdeps",
+    "diagnostics": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/RenderCommand.dia"
+  },
+  "/Users/abdoelrhman/Developer/side/snapview/Sources/snapview/Generator/RegistryGenerator.swift": {
+    "dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/RegistryGenerator.d",
+    "object": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/RegistryGenerator.swift.o",
+    "swiftmodule": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/RegistryGenerator~partial.swiftmodule",
+    "swift-dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/RegistryGenerator.swiftdeps",
+    "diagnostics": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/RegistryGenerator.dia"
+  },
+  "/Users/abdoelrhman/Developer/side/snapview/Sources/snapview/Generator/RendererTemplate.swift": {
+    "dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/RendererTemplate.d",
+    "object": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/RendererTemplate.swift.o",
+    "swiftmodule": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/RendererTemplate~partial.swiftmodule",
+    "swift-dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/RendererTemplate.swiftdeps",
+    "diagnostics": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/RendererTemplate.dia"
+  },
+  "/Users/abdoelrhman/Developer/side/snapview/Sources/snapview/Project/ProjectDetector.swift": {
+    "dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/ProjectDetector.d",
+    "object": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/ProjectDetector.swift.o",
+    "swiftmodule": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/ProjectDetector~partial.swiftmodule",
+    "swift-dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/ProjectDetector.swiftdeps",
+    "diagnostics": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/ProjectDetector.dia"
+  },
+  "/Users/abdoelrhman/Developer/side/snapview/Sources/snapview/Project/ProjectInjector.swift": {
+    "dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/ProjectInjector.d",
+    "object": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/ProjectInjector.swift.o",
+    "swiftmodule": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/ProjectInjector~partial.swiftmodule",
+    "swift-dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/ProjectInjector.swiftdeps",
+    "diagnostics": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/ProjectInjector.dia"
+  },
+  "/Users/abdoelrhman/Developer/side/snapview/Sources/snapview/Project/XcodeDetector.swift": {
+    "dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/XcodeDetector.d",
+    "object": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/XcodeDetector.swift.o",
+    "swiftmodule": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/XcodeDetector~partial.swiftmodule",
+    "swift-dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/XcodeDetector.swiftdeps",
+    "diagnostics": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/XcodeDetector.dia"
+  },
+  "/Users/abdoelrhman/Developer/side/snapview/Sources/snapview/Runner/BuildRunner.swift": {
+    "dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/BuildRunner.d",
+    "object": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/BuildRunner.swift.o",
+    "swiftmodule": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/BuildRunner~partial.swiftmodule",
+    "swift-dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/BuildRunner.swiftdeps",
+    "diagnostics": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/BuildRunner.dia"
+  },
+  "/Users/abdoelrhman/Developer/side/snapview/Sources/snapview/Runner/PNGExtractor.swift": {
+    "dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/PNGExtractor.d",
+    "object": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/PNGExtractor.swift.o",
+    "swiftmodule": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/PNGExtractor~partial.swiftmodule",
+    "swift-dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/PNGExtractor.swiftdeps",
+    "diagnostics": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/PNGExtractor.dia"
+  },
+  "/Users/abdoelrhman/Developer/side/snapview/Sources/snapview/Scanner/ImportScanner.swift": {
+    "dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/ImportScanner.d",
+    "object": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/ImportScanner.swift.o",
+    "swiftmodule": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/ImportScanner~partial.swiftmodule",
+    "swift-dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/ImportScanner.swiftdeps",
+    "diagnostics": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/ImportScanner.dia"
+  },
+  "/Users/abdoelrhman/Developer/side/snapview/Sources/snapview/Scanner/PreviewMatcher.swift": {
+    "dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/PreviewMatcher.d",
+    "object": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/PreviewMatcher.swift.o",
+    "swiftmodule": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/PreviewMatcher~partial.swiftmodule",
+    "swift-dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/PreviewMatcher.swiftdeps",
+    "diagnostics": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/PreviewMatcher.dia"
+  },
+  "/Users/abdoelrhman/Developer/side/snapview/Sources/snapview/Scanner/PreviewScanner.swift": {
+    "dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/PreviewScanner.d",
+    "object": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/PreviewScanner.swift.o",
+    "swiftmodule": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/PreviewScanner~partial.swiftmodule",
+    "swift-dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/PreviewScanner.swiftdeps",
+    "diagnostics": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/PreviewScanner.dia"
+  },
+  "/Users/abdoelrhman/Developer/side/snapview/Sources/snapview/SnapviewCommand.swift": {
+    "dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/SnapviewCommand.d",
+    "object": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/SnapviewCommand.swift.o",
+    "swiftmodule": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/SnapviewCommand~partial.swiftmodule",
+    "swift-dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/SnapviewCommand.swiftdeps",
+    "diagnostics": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapview.build/SnapviewCommand.dia"
+  }
+}

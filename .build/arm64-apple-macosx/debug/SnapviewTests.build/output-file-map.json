@@ -1,0 +1,40 @@
+{
+  "": {
+    "swift-dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/SnapviewTests.build/master.swiftdeps"
+  },
+  "/Users/abdoelrhman/Developer/side/snapview/Tests/SnapviewTests/ImportScannerTests.swift": {
+    "dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/SnapviewTests.build/ImportScannerTests.d",
+    "object": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/SnapviewTests.build/ImportScannerTests.swift.o",
+    "swiftmodule": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/SnapviewTests.build/ImportScannerTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/SnapviewTests.build/ImportScannerTests.swiftdeps",
+    "diagnostics": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/SnapviewTests.build/ImportScannerTests.dia"
+  },
+  "/Users/abdoelrhman/Developer/side/snapview/Tests/SnapviewTests/PreviewMatcherTests.swift": {
+    "dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/SnapviewTests.build/PreviewMatcherTests.d",
+    "object": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/SnapviewTests.build/PreviewMatcherTests.swift.o",
+    "swiftmodule": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/SnapviewTests.build/PreviewMatcherTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/SnapviewTests.build/PreviewMatcherTests.swiftdeps",
+    "diagnostics": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/SnapviewTests.build/PreviewMatcherTests.dia"
+  },
+  "/Users/abdoelrhman/Developer/side/snapview/Tests/SnapviewTests/PreviewScannerTests.swift": {
+    "dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/SnapviewTests.build/PreviewScannerTests.d",
+    "object": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/SnapviewTests.build/PreviewScannerTests.swift.o",
+    "swiftmodule": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/SnapviewTests.build/PreviewScannerTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/SnapviewTests.build/PreviewScannerTests.swiftdeps",
+    "diagnostics": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/SnapviewTests.build/PreviewScannerTests.dia"
+  },
+  "/Users/abdoelrhman/Developer/side/snapview/Tests/SnapviewTests/RegistryGeneratorTests.swift": {
+    "dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/SnapviewTests.build/RegistryGeneratorTests.d",
+    "object": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/SnapviewTests.build/RegistryGeneratorTests.swift.o",
+    "swiftmodule": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/SnapviewTests.build/RegistryGeneratorTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/SnapviewTests.build/RegistryGeneratorTests.swiftdeps",
+    "diagnostics": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/SnapviewTests.build/RegistryGeneratorTests.dia"
+  },
+  "/Users/abdoelrhman/Developer/side/snapview/Tests/SnapviewTests/RendererTemplateTests.swift": {
+    "dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/SnapviewTests.build/RendererTemplateTests.d",
+    "object": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/SnapviewTests.build/RendererTemplateTests.swift.o",
+    "swiftmodule": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/SnapviewTests.build/RendererTemplateTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/SnapviewTests.build/RendererTemplateTests.swiftdeps",
+    "diagnostics": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/SnapviewTests.build/RendererTemplateTests.dia"
+  }
+}

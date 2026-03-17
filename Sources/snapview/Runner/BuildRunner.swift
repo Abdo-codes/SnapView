@@ -46,6 +46,8 @@ enum BuildRunner {
       "-scheme", options.scheme,
       "-destination", "platform=iOS Simulator,name=\(simulator)",
       "-only-testing:\(options.project.testTargetName)/SnapViewRenderer/test_render",
+      "-skipMacroValidation",
+      "CODE_SIGNING_ALLOWED=NO",
     ]
 
     // Write config to JSON file that the renderer reads at runtime.

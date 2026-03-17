@@ -1,0 +1,12 @@
+{
+  "": {
+    "swift-dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/PathKit.build/master.swiftdeps"
+  },
+  "/Users/abdoelrhman/Developer/side/snapview/.build/checkouts/PathKit/Sources/PathKit.swift": {
+    "dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/PathKit.build/PathKit.d",
+    "object": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/PathKit.build/PathKit.swift.o",
+    "swiftmodule": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/PathKit.build/PathKit~partial.swiftmodule",
+    "swift-dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/PathKit.build/PathKit.swiftdeps",
+    "diagnostics": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/PathKit.build/PathKit.dia"
+  }
+}

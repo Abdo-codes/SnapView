@@ -1,0 +1,12 @@
+{
+  "": {
+    "swift-dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapviewPackageTests.build/master.swiftdeps"
+  },
+  "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapviewPackageTests.derived/runner.swift": {
+    "dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapviewPackageTests.build/runner.d",
+    "object": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapviewPackageTests.build/runner.swift.o",
+    "swiftmodule": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapviewPackageTests.build/runner~partial.swiftmodule",
+    "swift-dependencies": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapviewPackageTests.build/runner.swiftdeps",
+    "diagnostics": "/Users/abdoelrhman/Developer/side/snapview/.build/arm64-apple-macosx/debug/snapviewPackageTests.build/runner.dia"
+  }
+}
