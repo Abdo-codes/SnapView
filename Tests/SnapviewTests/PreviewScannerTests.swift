@@ -88,4 +88,130 @@ struct PreviewScannerTests {
     let results = PreviewScanner.scan(source: source, filePath: "Foo.swift")
     #expect(results.isEmpty)
   }
+
+  // MARK: - Edge case tests
+
+  @Test("line comments in body are handled")
+  func lineCommentsInBody() throws {
+    let source = """
+    #Preview("Commented") {
+      Text("hi") // a comment
+    }
+    """
+    let results = PreviewScanner.scan(source: source, filePath: "Test.swift")
+    #expect(results.count == 1)
+    #expect(results[0].name == "Commented")
+    #expect(results[0].body.contains("Text(\"hi\")"))
+  }
+
+  @Test("block comments in body are handled")
+  func blockCommentsInBody() throws {
+    let source = """
+    #Preview("Block") {
+      /* skip */ Text("hi")
+    }
+    """
+    let results = PreviewScanner.scan(source: source, filePath: "Test.swift")
+    #expect(results.count == 1)
+    #expect(results[0].name == "Block")
+    #expect(results[0].body.contains("Text(\"hi\")"))
+  }
+
+  @Test("unclosed brace returns empty")
+  func unclosedBrace() throws {
+    let source = """
+    #Preview("Bad") { VStack { Text("hi") }
+    """
+    let results = PreviewScanner.scan(source: source, filePath: "Test.swift")
+    #expect(results.isEmpty)
+  }
+
+  @Test("empty preview body returns entry with empty body")
+  func emptyPreviewBody() throws {
+    let source = """
+    #Preview("Empty") { }
+    """
+    let results = PreviewScanner.scan(source: source, filePath: "Test.swift")
+    #expect(results.count == 1)
+    #expect(results[0].name == "Empty")
+    #expect(results[0].body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+  }
+
+  @Test("preview name with escaped quotes")
+  func escapedQuotesInName() throws {
+    let source = """
+    #Preview("Say \\"Hello\\"") {
+      Text("hi")
+    }
+    """
+    let results = PreviewScanner.scan(source: source, filePath: "Test.swift")
+    #expect(results.count == 1)
+    #expect(results[0].name.contains("Hello"))
+  }
+
+  @Test("lowercase #preview does not match")
+  func caseSensitivity() throws {
+    let source = """
+    #preview {
+      Text("hi")
+    }
+    """
+    let results = PreviewScanner.scan(source: source, filePath: "Test.swift")
+    #expect(results.isEmpty)
+  }
+
+  @Test("deeply nested braces (5 levels) are captured")
+  func deepNesting() throws {
+    let source = """
+    #Preview("Deep") {
+      A {
+        B {
+          C {
+            D {
+              E {
+                Text("deep")
+              }
+            }
+          }
+        }
+      }
+    }
+    """
+    let results = PreviewScanner.scan(source: source, filePath: "Test.swift")
+    #expect(results.count == 1)
+    #expect(results[0].body.contains("Text(\"deep\")"))
+  }
+
+  @Test("whitespace before #Preview is ignored")
+  func whitespaceBeforePreview() throws {
+    let source = """
+       #Preview("Indented") {
+      Text("hi")
+    }
+    """
+    let results = PreviewScanner.scan(source: source, filePath: "Test.swift")
+    #expect(results.count == 1)
+    #expect(results[0].name == "Indented")
+    #expect(results[0].body.contains("Text(\"hi\")"))
+  }
+
+  @Test("empty source returns empty array")
+  func emptySource() throws {
+    let results = PreviewScanner.scan(source: "", filePath: "Test.swift")
+    #expect(results.isEmpty)
+  }
+
+  @Test("trailing content after preview is not captured in body")
+  func trailingContentAfterPreview() throws {
+    let source = """
+    #Preview("A") {
+      Text("a")
+    }
+    struct Foo {}
+    """
+    let results = PreviewScanner.scan(source: source, filePath: "Test.swift")
+    #expect(results.count == 1)
+    #expect(results[0].name == "A")
+    #expect(!results[0].body.contains("struct Foo"))
+  }
 }
