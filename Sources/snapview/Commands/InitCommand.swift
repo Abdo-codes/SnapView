@@ -38,7 +38,7 @@ struct InitCommand: ParsableCommand {
     try ProjectInjector.inject(project: projectInfo)
 
     print("[4/4] Done.\n")
-    print("snapview is ready. Run: snapview render <ViewName> --scheme \(scheme)")
+    print("snapview is ready. Run: snapview prepare --scheme \(scheme)")
     print("Tip: Add .snapview/ to your .gitignore.")
   }
 }

@@ -7,7 +7,6 @@ enum ProjectInjector {
   enum Error: Swift.Error, CustomStringConvertible {
     case testTargetNotFound(String)
     case sourceBuildPhaseNotFound
-    case alreadyInitialized
 
     var description: String {
       switch self {
@@ -15,8 +14,6 @@ enum ProjectInjector {
         return "[snapview:error] Test target '\(name)' not found in project."
       case .sourceBuildPhaseNotFound:
         return "[snapview:error] No Sources build phase found in test target."
-      case .alreadyInitialized:
-        return "[snapview:error] snapview is already initialized. SnapViewRenderer.swift exists in test target."
       }
     }
   }
@@ -39,24 +36,6 @@ enum ProjectInjector {
         appName: project.appName,
         pbxproj: pbxproj
       )
-    }
-
-    // Check if already initialized — but always ensure scheme is correct
-    let existingFiles = try testTarget.sourcesBuildPhase()?.files ?? []
-    let alreadyHasRenderer = existingFiles.contains { file in
-      file.file?.path?.contains("SnapViewRenderer") == true
-    }
-    if alreadyHasRenderer {
-      // Still ensure the scheme is set up (may have been skipped on earlier init)
-      try ensureSchemeIncludesTestTarget(
-        xcodeproj: xcodeproj,
-        projectPath: pbxPath,
-        schemeName: project.appName,
-        testTargetName: project.testTargetName,
-        testTarget: testTarget
-      )
-      try xcodeproj.write(path: pbxPath)
-      throw Error.alreadyInitialized
     }
 
     // Find the test target's source directory
@@ -87,15 +66,6 @@ enum ProjectInjector {
       throw Error.sourceBuildPhaseNotFound
     }
 
-    let rendererRef = try targetGroup.addFile(
-      at: Path(rendererPath),
-      sourceRoot: Path(project.sourceRoot)
-    )
-    let registryRef = try targetGroup.addFile(
-      at: Path(registryPath),
-      sourceRoot: Path(project.sourceRoot)
-    )
-
     let sourcePhase = try testTarget.sourcesBuildPhase() ?? testTarget.buildPhases
       .compactMap { $0 as? PBXSourcesBuildPhase }.first
 
@@ -103,8 +73,20 @@ enum ProjectInjector {
       throw Error.sourceBuildPhaseNotFound
     }
 
-    _ = try phase.add(file: rendererRef)
-    _ = try phase.add(file: registryRef)
+    try ensureSourceFile(
+      named: "SnapViewRenderer.swift",
+      at: rendererPath,
+      in: targetGroup,
+      phase: phase,
+      sourceRoot: project.sourceRoot
+    )
+    try ensureSourceFile(
+      named: "SnapViewRegistry.swift",
+      at: registryPath,
+      in: targetGroup,
+      phase: phase,
+      sourceRoot: project.sourceRoot
+    )
 
     // Ensure the scheme includes the test target in its test action
     // (must happen BEFORE xcodeproj.write — uses native XCScheme API)
@@ -117,6 +99,34 @@ enum ProjectInjector {
     )
 
     try xcodeproj.write(path: pbxPath)
+  }
+
+  private static func ensureSourceFile(
+    named fileName: String,
+    at path: String,
+    in group: PBXGroup,
+    phase: PBXSourcesBuildPhase,
+    sourceRoot: String
+  ) throws {
+    let buildFiles = phase.files ?? []
+    let existingBuildFile = buildFiles.first { buildFile in
+      buildFile.file?.path?.contains(fileName) == true
+    }
+    if existingBuildFile != nil {
+      return
+    }
+
+    let groupReference = group.children
+      .compactMap { $0 as? PBXFileReference }
+      .first { $0.path?.contains(fileName) == true }
+
+    let fileReference = if let groupReference {
+      groupReference
+    } else {
+      try group.addFile(at: Path(path), sourceRoot: Path(sourceRoot))
+    }
+
+    _ = try phase.add(file: fileReference)
   }
 
   // MARK: - Scheme Management

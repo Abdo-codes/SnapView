@@ -71,7 +71,9 @@ enum ProjectDetector {
       appName: appName,
       moduleName: moduleName,
       testTargetName: testTarget ?? "\(appName)Tests",
-      sourceRoot: cwd
+      sourceRoot: URL(filePath: resolvedWorkspace ?? resolvedProject)
+        .deletingLastPathComponent()
+        .path
     )
   }
 

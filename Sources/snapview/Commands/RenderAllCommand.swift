@@ -4,7 +4,7 @@ import Foundation
 struct RenderAllCommand: ParsableCommand {
   static let configuration = CommandConfiguration(
     commandName: "render-all",
-    abstract: "Render all #Preview blocks in the project."
+    abstract: "Render all discovered #Preview blocks in the project."
   )
 
   @Option(name: .long, help: "Xcode scheme to build.")
@@ -25,6 +25,9 @@ struct RenderAllCommand: ParsableCommand {
     let projectInfo = try ProjectDetector.detect(
       projectPath: project, workspacePath: workspace, testTarget: testTarget
     )
+    try ProjectValidator.validateRenderPrerequisites(project: projectInfo, scheme: scheme)
+    let prepared = try PreparationStore.load(sourceRoot: projectInfo.sourceRoot)
+    try PreparationStore.validate(prepared, project: projectInfo, scheme: scheme)
 
     let rendererPath = "\(projectInfo.sourceRoot)/\(projectInfo.testTargetName)/SnapViewRenderer.swift"
     guard FileManager.default.fileExists(atPath: rendererPath) else {
@@ -34,34 +37,57 @@ struct RenderAllCommand: ParsableCommand {
     print("[1/4] Scanning all #Preview blocks...")
     let allEntries = RenderCommand.scanProject(sourceRoot: projectInfo.sourceRoot, appName: projectInfo.appName)
     guard !allEntries.isEmpty else {
-      throw CleanExit.message("[snapview:error] No #Preview blocks found in project.")
+      throw CleanExit.message(RenderMessaging.noPreviewsFound())
     }
     print("       Found \(allEntries.count) previews.")
 
-    print("[2/4] Regenerating SnapViewRegistry.swift...")
-    let allImports = Set(allEntries.flatMap { entry in
-      let fullPath = "\(projectInfo.sourceRoot)/\(projectInfo.appName)/\(entry.filePath)"
-      let source = (try? String(contentsOfFile: fullPath, encoding: .utf8)) ?? ""
-      return ImportScanner.scan(source: source)
-    })
-    let registry = RegistryGenerator.generate(
-      entries: allEntries, imports: Array(allImports), appModule: projectInfo.moduleName
-    )
-    let registryPath = "\(projectInfo.sourceRoot)/\(projectInfo.testTargetName)/SnapViewRegistry.swift"
-    try registry.write(toFile: registryPath, atomically: true, encoding: .utf8)
+    print("[2/4] Loading prepared test artifacts...")
+    print("       \(prepared.destinationSpecifier)")
 
     let (width, height) = RenderCommand.deviceDimensions(device)
-    print("[3/4] Building & running test...")
     let startTime = Date()
-    try BuildRunner.run(options: .init(
+    let options = BuildRunner.Options(
       scheme: scheme, project: projectInfo, viewNames: [],
       scale: scale, width: width, height: height,
       rtl: rtl, locale: locale, simulator: simulator, verbose: verbose
-    ))
+    )
+    let renderedOutputPath: String
+
+    if let state = try HostStore.loadActive(sourceRoot: projectInfo.sourceRoot) {
+      print("[3/4] Rendering through persistent host...")
+      do {
+        let response = try HostRuntime.requestRender(
+          .init(viewNames: [], options: options),
+          runtimeDirectory: state.runtimeDirectory,
+          timeout: 60
+        )
+        if let errorMessage = response.errorMessage {
+          throw CleanExit.message("[snapview:error] \(errorMessage)")
+        }
+        renderedOutputPath = HostRuntime.outputDirectory(runtimeDirectory: state.runtimeDirectory)
+      } catch let error as CleanExit {
+        throw error
+      } catch {
+        print("       Host unavailable, falling back to cached test bundle...")
+        try? HostStore.remove(sourceRoot: projectInfo.sourceRoot)
+        renderedOutputPath = try BuildRunner.runPrepared(options: options, prepared: prepared)
+      }
+    } else {
+      print("[3/4] Running cached test bundle...")
+      renderedOutputPath = try BuildRunner.runPrepared(options: options, prepared: prepared)
+    }
     let elapsed = String(format: "%.1f", Date().timeIntervalSince(startTime))
 
     let outputDir = "\(projectInfo.sourceRoot)/\(output)"
-    let paths = try PNGExtractor.extract(to: outputDir)
+    let finalized = try RenderedOutputFinalizer.finalize(
+      renderedOutputPath: renderedOutputPath,
+      outputDir: outputDir
+    )
+    if case let .reused(_, error) = finalized {
+      print("       Warning: couldn't copy PNGs to \(outputDir); using runtime output instead.")
+      print("       \(error.localizedDescription)")
+    }
+    let paths = finalized.paths
     print("[4/4] Done (\(elapsed)s).\n")
     for path in paths { print("  \(path)") }
   }

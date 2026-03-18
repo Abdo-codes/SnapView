@@ -4,10 +4,10 @@ import Foundation
 struct RenderCommand: ParsableCommand {
   static let configuration = CommandConfiguration(
     commandName: "render",
-    abstract: "Render previews matching a view name or preview name."
+    abstract: "Render #Preview entries matching a view name or preview name."
   )
 
-  @Argument(help: "View name or preview name to render.")
+  @Argument(help: "View name or preview name to render. The view must be covered by a #Preview.")
   var viewName: String
 
   @Option(name: .long, help: "Xcode scheme to build.")
@@ -28,6 +28,9 @@ struct RenderCommand: ParsableCommand {
     let projectInfo = try ProjectDetector.detect(
       projectPath: project, workspacePath: workspace, testTarget: testTarget
     )
+    try ProjectValidator.validateRenderPrerequisites(project: projectInfo, scheme: scheme)
+    let prepared = try PreparationStore.load(sourceRoot: projectInfo.sourceRoot)
+    try PreparationStore.validate(prepared, project: projectInfo, scheme: scheme)
 
     // Verify init was run
     let rendererPath = "\(projectInfo.sourceRoot)/\(projectInfo.testTargetName)/SnapViewRenderer.swift"
@@ -43,36 +46,59 @@ struct RenderCommand: ParsableCommand {
     let matched = PreviewMatcher.match(viewName: viewName, entries: allEntries)
 
     guard !matched.isEmpty else {
-      throw CleanExit.message("[snapview:error] No #Preview found for \"\(viewName)\" in project sources.")
+      throw CleanExit.message(RenderMessaging.previewNotFound(viewName: viewName))
     }
 
     let names = matched.map(\.name).joined(separator: ", ")
     print("       Found: \(matched[0].filePath) → \(names)")
 
-    // Step 2: Regenerate registry
-    print("[2/4] Regenerating SnapViewRegistry.swift (\(matched.count) entries)...")
-    let allImports = matched.flatMap { entry in
-      let fullPath = "\(projectInfo.sourceRoot)/\(projectInfo.appName)/\(entry.filePath)"
-      let source = (try? String(contentsOfFile: fullPath, encoding: .utf8)) ?? ""
-      return ImportScanner.scan(source: source)
-    }
-    let registry = RegistryGenerator.generate(entries: matched, imports: allImports, appModule: projectInfo.moduleName)
-    let registryPath = "\(projectInfo.sourceRoot)/\(projectInfo.testTargetName)/SnapViewRegistry.swift"
-    try registry.write(toFile: registryPath, atomically: true, encoding: .utf8)
+    print("[2/4] Loading prepared test artifacts...")
+    print("       \(prepared.destinationSpecifier)")
 
-    // Step 3: Build & run
-    print("[3/4] Building & running test...")
     let startTime = Date()
-    try BuildRunner.run(options: .init(
+    let options = BuildRunner.Options(
       scheme: scheme, project: projectInfo, viewNames: matched.map(\.name),
       scale: scale, width: width, height: height,
       rtl: rtl, locale: locale, simulator: simulator, verbose: verbose
-    ))
+    )
+    let renderedOutputPath: String
+
+    if let state = try HostStore.loadActive(sourceRoot: projectInfo.sourceRoot) {
+      print("[3/4] Rendering through persistent host...")
+      do {
+        let response = try HostRuntime.requestRender(
+          .init(viewNames: matched.map(\.name), options: options),
+          runtimeDirectory: state.runtimeDirectory,
+          timeout: 15
+        )
+        if let errorMessage = response.errorMessage {
+          throw CleanExit.message("[snapview:error] \(errorMessage)")
+        }
+        renderedOutputPath = HostRuntime.outputDirectory(runtimeDirectory: state.runtimeDirectory)
+      } catch let error as CleanExit {
+        throw error
+      } catch {
+        print("       Host unavailable, falling back to cached test bundle...")
+        try? HostStore.remove(sourceRoot: projectInfo.sourceRoot)
+        renderedOutputPath = try BuildRunner.runPrepared(options: options, prepared: prepared)
+      }
+    } else {
+      print("[3/4] Running cached test bundle...")
+      renderedOutputPath = try BuildRunner.runPrepared(options: options, prepared: prepared)
+    }
     let elapsed = String(format: "%.1f", Date().timeIntervalSince(startTime))
 
     // Step 4: Extract PNGs
     let outputDir = "\(projectInfo.sourceRoot)/\(output)"
-    let paths = try PNGExtractor.extract(to: outputDir)
+    let finalized = try RenderedOutputFinalizer.finalize(
+      renderedOutputPath: renderedOutputPath,
+      outputDir: outputDir
+    )
+    if case let .reused(_, error) = finalized {
+      print("       Warning: couldn't copy PNGs to \(outputDir); using runtime output instead.")
+      print("       \(error.localizedDescription)")
+    }
+    let paths = finalized.paths
     print("[4/4] Done (\(elapsed)s).\n")
 
     for path in paths {

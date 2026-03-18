@@ -4,7 +4,7 @@ import Foundation
 struct ListCommand: ParsableCommand {
   static let configuration = CommandConfiguration(
     commandName: "list",
-    abstract: "List all discovered #Preview blocks."
+    abstract: "List all discovered #Preview blocks that snapview can render."
   )
 
   @Option(name: .long) var project: String?
@@ -19,7 +19,7 @@ struct ListCommand: ParsableCommand {
     )
 
     if entries.isEmpty {
-      print("No #Preview blocks found.")
+      print(RenderMessaging.noPreviewsFoundList())
       return
     }
 

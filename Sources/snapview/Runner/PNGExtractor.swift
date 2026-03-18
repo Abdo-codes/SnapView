@@ -3,8 +3,13 @@ import Foundation
 enum PNGExtractor {
 
   static func extract(to outputDir: String) throws -> [String] {
+    try extract(from: "/tmp/snapview/output", to: outputDir)
+  }
+
+  static func extract(from sourcePath: String, to outputDir: String) throws -> [String] {
     let fm = FileManager.default
-    let sourcePath = "/tmp/snapview"
+    let sourceURL = URL(filePath: sourcePath)
+    let outputURL = URL(filePath: outputDir)
 
     if !fm.fileExists(atPath: outputDir) {
       try fm.createDirectory(atPath: outputDir, withIntermediateDirectories: true)
@@ -21,11 +26,11 @@ enum PNGExtractor {
 
     var outputPaths: [String] = []
     for png in pngs {
-      let src = "\(sourcePath)/\(png)"
-      let dst = "\(outputDir)/\(png)"
-      if fm.fileExists(atPath: dst) { try fm.removeItem(atPath: dst) }
-      try fm.copyItem(atPath: src, toPath: dst)
-      outputPaths.append(dst)
+      let src = sourceURL.appendingPathComponent(png)
+      let dst = outputURL.appendingPathComponent(png)
+      let data = try Data(contentsOf: src)
+      try data.write(to: dst)
+      outputPaths.append(dst.path(percentEncoded: false))
     }
 
     return outputPaths.sorted()
