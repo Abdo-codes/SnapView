@@ -9,6 +9,7 @@ struct HostedRenderState: Codable, Equatable {
   let logPath: String
   let destinationSpecifier: String
   let xctestrunPath: String
+  let preparedAt: Date
   let pid: Int
 
   private enum CodingKeys: String, CodingKey {
@@ -19,6 +20,7 @@ struct HostedRenderState: Codable, Equatable {
     case logPath
     case destinationSpecifier
     case xctestrunPath
+    case preparedAt
     case pid
   }
 
@@ -30,6 +32,7 @@ struct HostedRenderState: Codable, Equatable {
     logPath: String,
     destinationSpecifier: String,
     xctestrunPath: String,
+    preparedAt: Date,
     pid: Int
   ) {
     self.scheme = scheme
@@ -39,6 +42,7 @@ struct HostedRenderState: Codable, Equatable {
     self.logPath = logPath
     self.destinationSpecifier = destinationSpecifier
     self.xctestrunPath = xctestrunPath
+    self.preparedAt = preparedAt
     self.pid = pid
   }
 
@@ -51,6 +55,7 @@ struct HostedRenderState: Codable, Equatable {
     logPath = try container.decode(String.self, forKey: .logPath)
     destinationSpecifier = try container.decodeIfPresent(String.self, forKey: .destinationSpecifier) ?? ""
     xctestrunPath = try container.decodeIfPresent(String.self, forKey: .xctestrunPath) ?? ""
+    preparedAt = try container.decodeIfPresent(Date.self, forKey: .preparedAt) ?? .distantPast
     pid = try container.decode(Int.self, forKey: .pid)
   }
 }

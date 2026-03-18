@@ -38,6 +38,25 @@ struct HostSupervisorTests {
     #expect(decision == .restart)
   }
 
+  @Test("rebuilt prepared artifacts at the same path require restart")
+  func rebuiltPreparedArtifactsAtSamePathRequireRestart() {
+    let prepared = preparedState(preparedAt: Date(timeIntervalSince1970: 2_000))
+    let matchingRuntime = HostRuntime.hostRuntimeDirectory(for: prepared)
+    let staleHost = hostState(
+      runtimeDirectory: matchingRuntime,
+      preparedAt: Date(timeIntervalSince1970: 1_000),
+      pid: 161
+    )
+
+    let decision = HostSupervisor.restartDecision(
+      prepared: prepared,
+      host: staleHost,
+      isHostActive: true
+    )
+
+    #expect(decision == .restart)
+  }
+
   @Test("matching active host does not restart unnecessarily")
   func matchingActiveHostDoesNotRestartUnnecessarily() throws {
     let prepared = preparedState()
@@ -100,11 +119,39 @@ struct HostSupervisorTests {
     )
   }
 
+  @Test("reusable host helper removes stale hosts instead of reusing them")
+  func reusableHostHelperRemovesStaleHosts() throws {
+    let prepared = preparedState(preparedAt: Date(timeIntervalSince1970: 2_000))
+    let staleHost = hostState(
+      runtimeDirectory: HostRuntime.hostRuntimeDirectory(for: prepared),
+      preparedAt: Date(timeIntervalSince1970: 1_000),
+      pid: 505
+    )
+    var events: [String] = []
+
+    let reusable = try HostSupervisor.reusableHost(
+      prepared: prepared,
+      sourceRoot: "/tmp/source-root",
+      existingHost: staleHost,
+      isHostActive: { _ in true },
+      stopHost: { state, timeout in
+        events.append("stop:\(state.pid):\(timeout)")
+      },
+      removeStoredHost: { sourceRoot in
+        events.append("remove:\(sourceRoot)")
+      }
+    )
+
+    #expect(reusable == nil)
+    #expect(events == ["stop:505:1.0", "remove:/tmp/source-root"])
+  }
+
   private func preparedState(
     scheme: String = "Demo",
     projectPath: String = "/tmp/Demo.xcodeproj",
     testTargetName: String = "DemoTests",
-    xctestrunPath: String = "/tmp/Demo.xctestrun"
+    xctestrunPath: String = "/tmp/Demo.xctestrun",
+    preparedAt: Date = Date(timeIntervalSince1970: 1_000)
   ) -> PreparedRenderState {
     PreparedRenderState(
       scheme: scheme,
@@ -113,7 +160,8 @@ struct HostSupervisorTests {
       testTargetName: testTargetName,
       destinationSpecifier: "platform=iOS Simulator,OS=17.5,name=iPhone 15",
       derivedDataPath: "/tmp/DerivedData",
-      xctestrunPath: xctestrunPath
+      xctestrunPath: xctestrunPath,
+      preparedAt: preparedAt
     )
   }
 
@@ -124,6 +172,7 @@ struct HostSupervisorTests {
     runtimeDirectory: String,
     destinationSpecifier: String = "platform=iOS Simulator,OS=17.5,name=iPhone 15",
     xctestrunPath: String = "/tmp/Demo.xctestrun",
+    preparedAt: Date = Date(timeIntervalSince1970: 1_000),
     pid: Int
   ) -> HostedRenderState {
     HostedRenderState(
@@ -134,6 +183,7 @@ struct HostSupervisorTests {
       logPath: "/tmp/source-root/.snapview/host.log",
       destinationSpecifier: destinationSpecifier,
       xctestrunPath: xctestrunPath,
+      preparedAt: preparedAt,
       pid: pid
     )
   }

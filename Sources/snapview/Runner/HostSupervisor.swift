@@ -29,6 +29,7 @@ enum HostSupervisor {
       host.runtimeDirectory == expectedRuntimeDirectory,
       host.destinationSpecifier == prepared.destinationSpecifier,
       host.xctestrunPath == prepared.xctestrunPath,
+      host.preparedAt == prepared.preparedAt,
       isHostActive
     else {
       return .restart
@@ -78,6 +79,7 @@ enum HostSupervisor {
       logPath: logPath,
       destinationSpecifier: prepared.destinationSpecifier,
       xctestrunPath: prepared.xctestrunPath,
+      preparedAt: prepared.preparedAt,
       pid: pid
     )
     try saveHost(state, sourceRoot)
@@ -91,6 +93,34 @@ enum HostSupervisor {
     }
 
     return EnsureResult(decision: decision, state: state)
+  }
+
+  static func reusableHost(
+    prepared: PreparedRenderState,
+    sourceRoot: String,
+    existingHost: HostedRenderState?,
+    isHostActive: (HostedRenderState) -> Bool = HostStore.isActive,
+    stopHost: (HostedRenderState, TimeInterval) throws -> Void = HostRunner.stop,
+    removeStoredHost: (String) throws -> Void = HostStore.remove
+  ) throws -> HostedRenderState? {
+    let decision = restartDecision(
+      prepared: prepared,
+      host: existingHost,
+      isHostActive: existingHost.map(isHostActive) ?? false
+    )
+
+    switch decision {
+    case .reuse:
+      return existingHost
+    case .start:
+      return nil
+    case .restart:
+      if let existingHost {
+        try? stopHost(existingHost, 1)
+        try? removeStoredHost(sourceRoot)
+      }
+      return nil
+    }
   }
 
   private static func defaultLogPath(sourceRoot: String) -> String {

@@ -18,6 +18,7 @@ struct HostStoreTests {
       logPath: "\(sourceRoot)/host.log",
       destinationSpecifier: "platform=iOS Simulator,OS=17.5,name=iPhone 15",
       xctestrunPath: "/tmp/Demo.xctestrun",
+      preparedAt: Date(timeIntervalSince1970: 1_000),
       pid: 42
     )
 
@@ -44,6 +45,7 @@ struct HostStoreTests {
       logPath: "\(sourceRoot)/host.log",
       destinationSpecifier: "platform=iOS Simulator,OS=17.5,name=iPhone 15",
       xctestrunPath: "/tmp/Demo.xctestrun",
+      preparedAt: Date(timeIntervalSince1970: 1_000),
       pid: Int(ProcessInfo.processInfo.processIdentifier)
     )
 
@@ -69,6 +71,7 @@ struct HostStoreTests {
       logPath: "\(sourceRoot)/host.log",
       destinationSpecifier: "platform=iOS Simulator,OS=17.5,name=iPhone 15",
       xctestrunPath: "/tmp/Demo.xctestrun",
+      preparedAt: Date(timeIntervalSince1970: 1_000),
       pid: Int(ProcessInfo.processInfo.processIdentifier)
     )
 

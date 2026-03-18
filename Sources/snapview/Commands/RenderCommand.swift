@@ -63,7 +63,11 @@ struct RenderCommand: ParsableCommand {
     )
     let renderedOutputPath: String
 
-    if let state = try HostStore.loadActive(sourceRoot: projectInfo.sourceRoot) {
+    if let state = try HostSupervisor.reusableHost(
+      prepared: prepared,
+      sourceRoot: projectInfo.sourceRoot,
+      existingHost: try HostStore.loadIfPresent(sourceRoot: projectInfo.sourceRoot)
+    ) {
       print("[3/4] Rendering through persistent host...")
       do {
         let response = try HostRuntime.requestRender(
@@ -79,7 +83,6 @@ struct RenderCommand: ParsableCommand {
         throw error
       } catch {
         print("       Host unavailable, falling back to cached test bundle...")
-        try? HostStore.remove(sourceRoot: projectInfo.sourceRoot)
         renderedOutputPath = try BuildRunner.runPrepared(options: options, prepared: prepared)
       }
     } else {
