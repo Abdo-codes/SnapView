@@ -83,11 +83,25 @@ struct RenderAllCommand: ParsableCommand {
       renderedOutputPath: renderedOutputPath,
       outputDir: outputDir
     )
-    if case let .reused(_, error) = finalized {
+    if finalized.usedRuntimeFallback {
       print("       Warning: couldn't copy PNGs to \(outputDir); using runtime output instead.")
-      print("       \(error.localizedDescription)")
+      for warning in finalized.warnings {
+        print("       \(warning)")
+      }
     }
-    let paths = finalized.paths
+    let paths = finalized.imagePaths
+    let galleryEntries = RenderCommand.galleryEntries(
+      from: allEntries,
+      finalized: finalized,
+      updatedAt: Date()
+    )
+    _ = try GalleryStore.persist(
+      entries: galleryEntries,
+      projectPath: projectInfo.projectPath,
+      scheme: scheme,
+      sourceRoot: projectInfo.sourceRoot,
+      mergeWithExisting: false
+    )
     print("[4/4] Done (\(elapsed)s).\n")
     for path in paths { print("  \(path)") }
   }

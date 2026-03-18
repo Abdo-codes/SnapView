@@ -20,13 +20,10 @@ struct RenderedOutputFinalizerTests {
       extractor: { _, _ in throw CocoaError(.fileWriteNoPermission) }
     )
 
-    switch result {
-    case .copied:
-      Issue.record("Expected runtime reuse fallback")
-    case let .reused(paths, error):
-      #expect(paths == [png.path(percentEncoded: false)])
-      #expect(error is CocoaError)
-    }
+    #expect(result.outputDirectory == rendered.path(percentEncoded: false))
+    #expect(result.imagePaths == [png.path(percentEncoded: false)])
+    #expect(result.usedRuntimeFallback)
+    #expect(result.warnings.count == 1)
   }
 
   @Test("returns copied paths when extraction succeeds")
@@ -37,11 +34,9 @@ struct RenderedOutputFinalizerTests {
       extractor: { _, _ in ["/tmp/output/Welcome.png"] }
     )
 
-    switch result {
-    case let .copied(paths):
-      #expect(paths == ["/tmp/output/Welcome.png"])
-    case .reused:
-      Issue.record("Expected copied result")
-    }
+    #expect(result.outputDirectory == "/tmp/output")
+    #expect(result.imagePaths == ["/tmp/output/Welcome.png"])
+    #expect(!result.usedRuntimeFallback)
+    #expect(result.warnings.isEmpty)
   }
 }

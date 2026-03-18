@@ -94,11 +94,25 @@ struct RenderCommand: ParsableCommand {
       renderedOutputPath: renderedOutputPath,
       outputDir: outputDir
     )
-    if case let .reused(_, error) = finalized {
+    if finalized.usedRuntimeFallback {
       print("       Warning: couldn't copy PNGs to \(outputDir); using runtime output instead.")
-      print("       \(error.localizedDescription)")
+      for warning in finalized.warnings {
+        print("       \(warning)")
+      }
     }
-    let paths = finalized.paths
+    let paths = finalized.imagePaths
+    let galleryEntries = Self.galleryEntries(
+      from: matched,
+      finalized: finalized,
+      updatedAt: Date()
+    )
+    _ = try GalleryStore.persist(
+      entries: galleryEntries,
+      projectPath: projectInfo.projectPath,
+      scheme: scheme,
+      sourceRoot: projectInfo.sourceRoot,
+      mergeWithExisting: true
+    )
     print("[4/4] Done (\(elapsed)s).\n")
 
     for path in paths {
@@ -136,5 +150,30 @@ struct RenderCommand: ParsableCommand {
       entries.append(contentsOf: fileEntries)
     }
     return entries
+  }
+
+  static func galleryEntries(
+    from previewEntries: [PreviewEntry],
+    finalized: FinalizedRenderOutput,
+    updatedAt: Date
+  ) -> [GalleryEntry] {
+    let imagePathsByName = Dictionary(uniqueKeysWithValues: finalized.imagePaths.map { path in
+      (URL(filePath: path).deletingPathExtension().lastPathComponent, path)
+    })
+
+    return previewEntries.compactMap { entry in
+      guard let imagePath = imagePathsByName[entry.name] else {
+        return nil
+      }
+
+      return GalleryEntry(
+        previewName: entry.name,
+        sourceFile: entry.filePath,
+        imagePath: imagePath,
+        source: finalized.usedRuntimeFallback ? .runtimeFallback : .copied,
+        warnings: finalized.warnings,
+        updatedAt: updatedAt
+      )
+    }
   }
 }

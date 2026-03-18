@@ -37,7 +37,50 @@ enum GalleryStore {
     return try JSONDecoder().decode(GalleryState.self, from: data)
   }
 
+  @discardableResult
+  static func persist(
+    entries: [GalleryEntry],
+    projectPath: String,
+    scheme: String,
+    sourceRoot: String,
+    mergeWithExisting: Bool = true
+  ) throws -> GalleryState {
+    let existing = try? load(sourceRoot: sourceRoot)
+    let state: GalleryState
+
+    if mergeWithExisting, let existing {
+      var merged = Dictionary(uniqueKeysWithValues: existing.entries.map { ($0.previewName, $0) })
+      for entry in entries {
+        merged[entry.previewName] = entry
+      }
+      state = GalleryState(
+        projectPath: projectPath,
+        scheme: scheme,
+        entries: merged.values.sorted { $0.previewName < $1.previewName }
+      )
+    } else {
+      state = GalleryState(
+        projectPath: projectPath,
+        scheme: scheme,
+        entries: entries.sorted { $0.previewName < $1.previewName }
+      )
+    }
+
+    try save(state, sourceRoot: sourceRoot)
+    try writePage(for: state, sourceRoot: sourceRoot)
+    return state
+  }
+
   static func path(sourceRoot: String) -> String {
     "\(sourceRoot)/.snapview/gallery.json"
+  }
+
+  static func pagePath(sourceRoot: String) -> String {
+    "\(sourceRoot)/.snapview/gallery.html"
+  }
+
+  static func writePage(for state: GalleryState, sourceRoot: String) throws {
+    let html = try GalleryPageGenerator.render(state: state)
+    try html.write(toFile: pagePath(sourceRoot: sourceRoot), atomically: true, encoding: .utf8)
   }
 }

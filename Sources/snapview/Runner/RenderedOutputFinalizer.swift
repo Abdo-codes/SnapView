@@ -1,31 +1,36 @@
 import Foundation
 
+struct FinalizedRenderOutput: Equatable {
+  let outputDirectory: String
+  let imagePaths: [String]
+  let usedRuntimeFallback: Bool
+  let warnings: [String]
+}
+
 enum RenderedOutputFinalizer {
-  enum Result {
-    case copied([String])
-    case reused([String], Error)
-
-    var paths: [String] {
-      switch self {
-      case let .copied(paths), let .reused(paths, _):
-        return paths
-      }
-    }
-  }
-
   static func finalize(
     renderedOutputPath: String,
     outputDir: String,
     extractor: (String, String) throws -> [String] = PNGExtractor.extract(from:to:)
-  ) throws -> Result {
+  ) throws -> FinalizedRenderOutput {
     do {
-      return .copied(try extractor(renderedOutputPath, outputDir))
+      return FinalizedRenderOutput(
+        outputDirectory: outputDir,
+        imagePaths: try extractor(renderedOutputPath, outputDir),
+        usedRuntimeFallback: false,
+        warnings: []
+      )
     } catch {
       let runtimePaths = try runtimePNGPaths(in: renderedOutputPath)
       guard !runtimePaths.isEmpty else {
         throw error
       }
-      return .reused(runtimePaths, error)
+      return FinalizedRenderOutput(
+        outputDirectory: renderedOutputPath,
+        imagePaths: runtimePaths,
+        usedRuntimeFallback: true,
+        warnings: [error.localizedDescription]
+      )
     }
   }
 
