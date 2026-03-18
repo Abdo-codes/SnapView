@@ -7,6 +7,7 @@ struct Snapview: ParsableCommand {
     abstract: "Render SwiftUI #Preview blocks to PNG images.",
     subcommands: [
       InitCommand.self,
+      DoctorCommand.self,
       PrepareCommand.self,
       HostCommand.self,
       RenderCommand.self,

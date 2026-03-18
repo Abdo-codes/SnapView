@@ -5,6 +5,23 @@ import Testing
 @Suite("DoctorRunner")
 struct DoctorRunnerTests {
 
+  @Test("formats grouped doctor findings for CLI output")
+  func doctorFormatsGroupedFindings() {
+    let text = DoctorCommandRenderer.render(
+      .fixture(findings: [
+        .init(
+          severity: .error,
+          code: .missingTestTargetInfoPlist,
+          message: "Missing Info.plist",
+          fix: "Set GENERATE_INFOPLIST_FILE = YES"
+        )
+      ])
+    )
+
+    #expect(text.contains("[error]"))
+    #expect(text.contains("GENERATE_INFOPLIST_FILE"))
+  }
+
   @Test("reports a missing generated Info.plist as a structured error")
   func doctorReportsMissingGeneratedInfoPlist() throws {
     let health = try DoctorRunner.run(
@@ -176,5 +193,23 @@ private extension ProjectValidator.TestTargetBuildSettings {
     infoPlistPath: String? = "AppTests/Info.plist"
   ) -> Self {
     Self(generateInfoPlist: generateInfoPlist, infoPlistPath: infoPlistPath)
+  }
+}
+
+private extension ProjectHealth {
+  static func fixture(
+    project: ProjectInfo = .fixture(),
+    scheme: String = "App",
+    previewCount: Int = 1,
+    outputWritable: Bool = true,
+    findings: [HealthFinding] = []
+  ) -> Self {
+    ProjectHealth(
+      project: project,
+      scheme: scheme,
+      previewCount: previewCount,
+      outputWritable: outputWritable,
+      findings: findings
+    )
   }
 }
