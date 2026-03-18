@@ -35,6 +35,8 @@ struct ProjectValidatorTests {
         #expect(scheme == "Demo")
       case .projectFileUnreadable(let path):
         Issue.record("Unexpected unreadable project file: \(path)")
+      @unknown default:
+        Issue.record("Unexpected validator error: \(error)")
       }
     } catch {
       Issue.record("Unexpected error: \(error)")

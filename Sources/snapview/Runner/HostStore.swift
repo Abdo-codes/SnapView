@@ -57,6 +57,54 @@ enum HostStore {
     )
   }
 
+  static func staleReason(
+    _ state: HostedRenderState?,
+    project: ProjectInfo,
+    scheme: String
+  ) -> String? {
+    guard let state else {
+      return nil
+    }
+    guard state.scheme == scheme else {
+      return "host scheme \(state.scheme) does not match \(scheme)"
+    }
+    guard state.projectPath == project.projectPath else {
+      return "host project path does not match the current project"
+    }
+    guard state.testTargetName == project.testTargetName else {
+      return "host test target \(state.testTargetName) does not match \(project.testTargetName)"
+    }
+    guard FileManager.default.fileExists(atPath: state.runtimeDirectory) else {
+      return "host runtime directory is missing"
+    }
+    guard isProcessAlive(pid: state.pid) else {
+      return "host process is not running"
+    }
+    guard FileManager.default.fileExists(
+      atPath: HostRuntime.readyPath(runtimeDirectory: state.runtimeDirectory)
+    ) else {
+      return "host ready marker is missing"
+    }
+    return nil
+  }
+
+  static func driftFinding(
+    _ state: HostedRenderState?,
+    project: ProjectInfo,
+    scheme: String
+  ) -> HealthFinding? {
+    guard let reason = staleReason(state, project: project, scheme: scheme) else {
+      return nil
+    }
+
+    return HealthFinding(
+      severity: .warning,
+      code: .staleHostState,
+      message: "Persistent host state is stale: \(reason)",
+      fix: "Run: snapview host stop --scheme \(scheme) && snapview host start --scheme \(scheme)"
+    )
+  }
+
   static func isProcessAlive(pid: Int) -> Bool {
     let result = kill(pid_t(pid), 0)
     return result == 0 || errno == EPERM

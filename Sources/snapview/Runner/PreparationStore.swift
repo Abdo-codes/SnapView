@@ -43,6 +43,14 @@ enum PreparationStore {
     return try JSONDecoder().decode(PreparedRenderState.self, from: data)
   }
 
+  static func loadIfPresent(sourceRoot: String) throws -> PreparedRenderState? {
+    let path = stateFilePath(sourceRoot: sourceRoot)
+    guard FileManager.default.fileExists(atPath: path) else {
+      return nil
+    }
+    return try load(sourceRoot: sourceRoot)
+  }
+
   static func stateFilePath(sourceRoot: String) -> String {
     "\(sourceRoot)/.snapview/prepare.json"
   }
@@ -52,17 +60,48 @@ enum PreparationStore {
     project: ProjectInfo,
     scheme: String
   ) throws {
+    if let reason = staleReason(state, project: project, scheme: scheme) {
+      throw Error.staleState(reason)
+    }
+  }
+
+  static func staleReason(
+    _ state: PreparedRenderState?,
+    project: ProjectInfo,
+    scheme: String
+  ) -> String? {
+    guard let state else {
+      return "preparation metadata is missing"
+    }
     guard state.scheme == scheme else {
-      throw Error.staleState("prepared scheme \(state.scheme) does not match \(scheme)")
+      return "prepared scheme \(state.scheme) does not match \(scheme)"
     }
     guard state.projectPath == project.projectPath else {
-      throw Error.staleState("prepared project path does not match the current project")
+      return "prepared project path does not match the current project"
     }
     guard state.testTargetName == project.testTargetName else {
-      throw Error.staleState("prepared test target \(state.testTargetName) does not match \(project.testTargetName)")
+      return "prepared test target \(state.testTargetName) does not match \(project.testTargetName)"
     }
     guard FileManager.default.fileExists(atPath: state.xctestrunPath) else {
-      throw Error.staleState("cached .xctestrun is missing")
+      return "cached .xctestrun is missing"
     }
+    return nil
+  }
+
+  static func driftFinding(
+    _ state: PreparedRenderState?,
+    project: ProjectInfo,
+    scheme: String
+  ) -> HealthFinding? {
+    guard let reason = staleReason(state, project: project, scheme: scheme) else {
+      return nil
+    }
+
+    return HealthFinding(
+      severity: .error,
+      code: .stalePreparationState,
+      message: "Prepared artifacts are stale: \(reason)",
+      fix: "Run: snapview prepare --scheme \(scheme)"
+    )
   }
 }
