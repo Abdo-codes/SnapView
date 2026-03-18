@@ -66,6 +66,32 @@ struct ProjectValidatorTests {
     try ProjectValidator.validateRenderPrerequisites(project: project, scheme: "Demo")
   }
 
+  @Test("flags any explicitly misconfigured plist configuration")
+  func flagsExplicitlyMisconfiguredInfoPlistConfiguration() {
+    let finding = ProjectValidator.infoPlistFinding(
+      buildSettings: .init(configurations: [
+        .init(name: "Debug", generateInfoPlist: false, infoPlistPath: nil),
+        .init(name: "Release", generateInfoPlist: nil, infoPlistPath: nil),
+      ]),
+      testTargetName: "DemoTests"
+    )
+
+    #expect(finding?.code == .missingTestTargetInfoPlist)
+    #expect(finding?.message.contains("Debug") == true)
+  }
+
+  @Test("does not flag unresolved plist settings as missing")
+  func ignoresUnresolvedInfoPlistSettings() {
+    let finding = ProjectValidator.infoPlistFinding(
+      buildSettings: .init(configurations: [
+        .init(name: "Debug", generateInfoPlist: nil, infoPlistPath: nil)
+      ]),
+      testTargetName: "DemoTests"
+    )
+
+    #expect(finding == nil)
+  }
+
   private func samplePBXProj(appName: String, includeTestTarget: Bool) -> String {
     let testTargetBlock = includeTestTarget ? """
             BBB /* \(appName)Tests */ = {

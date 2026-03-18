@@ -94,6 +94,8 @@ struct DoctorRunnerTests {
         $0.code == HealthFinding.Code.staleHostState
           && $0.severity == HealthFinding.Severity.warning
       })
+    let finding = health.findings.first { $0.code == .staleHostState }
+    #expect(finding?.fix?.contains("host stop --project /tmp/App/App.xcodeproj") == true)
   }
 
   @Test("downgrades unwritable output fallback to a warning")

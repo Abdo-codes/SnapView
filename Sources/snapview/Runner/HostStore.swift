@@ -101,7 +101,7 @@ enum HostStore {
       severity: .warning,
       code: .staleHostState,
       message: "Persistent host state is stale: \(reason)",
-      fix: "Run: snapview host stop --scheme \(scheme) && snapview host start --scheme \(scheme)"
+      fix: "Run: snapview host stop --project \(project.projectPath) && snapview host start --scheme \(scheme) --project \(project.projectPath)"
     )
   }
 

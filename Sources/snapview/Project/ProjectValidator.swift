@@ -5,8 +5,27 @@ import XcodeProj
 enum ProjectValidator {
 
   struct TestTargetBuildSettings: Equatable {
-    let generateInfoPlist: Bool
-    let infoPlistPath: String?
+    struct Configuration: Equatable {
+      let name: String
+      let generateInfoPlist: Bool?
+      let infoPlistPath: String?
+    }
+
+    let configurations: [Configuration]
+
+    init(configurations: [Configuration]) {
+      self.configurations = configurations
+    }
+
+    init(generateInfoPlist: Bool, infoPlistPath: String?) {
+      self.configurations = [
+        Configuration(
+          name: "Default",
+          generateInfoPlist: generateInfoPlist,
+          infoPlistPath: infoPlistPath
+        )
+      ]
+    }
   }
 
   enum Error: Swift.Error, CustomStringConvertible {
@@ -46,26 +65,28 @@ enum ProjectValidator {
       || section.contains("name = \(targetName);")
   }
 
-  static func testTargetBuildSettings(project: ProjectInfo) throws -> TestTargetBuildSettings {
+  static func testTargetBuildSettings(
+    project: ProjectInfo,
+    scheme: String? = nil
+  ) throws -> TestTargetBuildSettings {
     let projectPath = project.projectPath
 
     do {
       let xcodeproj = try XcodeProj(path: Path(projectPath))
       guard let target = xcodeproj.pbxproj.nativeTargets.first(where: { $0.name == project.testTargetName }) else {
-        throw Error.missingTestTarget(project.testTargetName, project.appName)
+        throw Error.missingTestTarget(project.testTargetName, scheme ?? project.appName)
       }
 
-      let configurations = target.buildConfigurationList?.buildConfigurations ?? []
-      let generateInfoPlist = configurations.contains {
-        buildSettingString($0.buildSettings["GENERATE_INFOPLIST_FILE"]) == "YES"
+      let configurations = (target.buildConfigurationList?.buildConfigurations ?? []).map { config in
+        TestTargetBuildSettings.Configuration(
+          name: config.name,
+          generateInfoPlist: buildSettingBool(config.buildSettings["GENERATE_INFOPLIST_FILE"]),
+          infoPlistPath: buildSettingString(config.buildSettings["INFOPLIST_FILE"])
+        )
       }
-      let infoPlistPath = configurations.compactMap {
-        buildSettingString($0.buildSettings["INFOPLIST_FILE"])
-      }.first(where: { !$0.isEmpty })
 
       return TestTargetBuildSettings(
-        generateInfoPlist: generateInfoPlist,
-        infoPlistPath: infoPlistPath
+        configurations: configurations
       )
     } catch let error as Error {
       throw error
@@ -78,20 +99,36 @@ enum ProjectValidator {
     buildSettings: TestTargetBuildSettings,
     testTargetName: String
   ) -> HealthFinding? {
-    guard !hasGeneratedOrExplicitInfoPlist(buildSettings) else {
+    let invalidConfigurations = buildSettings.configurations.filter { configuration in
+      if hasGeneratedOrExplicitInfoPlist(configuration) {
+        return false
+      }
+      return configuration.generateInfoPlist == false
+    }
+
+    guard !invalidConfigurations.isEmpty else {
       return nil
     }
+
+    let names = invalidConfigurations.map(\.name).joined(separator: ", ")
 
     return HealthFinding(
       severity: .error,
       code: .missingTestTargetInfoPlist,
-      message: "Test target '\(testTargetName)' has no generated or explicit Info.plist.",
+      message: "Test target '\(testTargetName)' has no generated or explicit Info.plist in: \(names).",
       fix: "Set GENERATE_INFOPLIST_FILE = YES or provide INFOPLIST_FILE for \(testTargetName)."
     )
   }
 
   static func hasGeneratedOrExplicitInfoPlist(_ buildSettings: TestTargetBuildSettings) -> Bool {
-    buildSettings.generateInfoPlist || buildSettings.infoPlistPath != nil
+    buildSettings.configurations.allSatisfy(hasGeneratedOrExplicitInfoPlist)
+  }
+
+  static func hasGeneratedOrExplicitInfoPlist(
+    _ configuration: TestTargetBuildSettings.Configuration
+  ) -> Bool {
+    configuration.generateInfoPlist == true
+      || (configuration.infoPlistPath?.isEmpty == false)
   }
 
   private static func buildSettingString(_ value: Any?) -> String? {
@@ -101,6 +138,25 @@ enum ProjectValidator {
 
     if let bool = value as? Bool {
       return bool ? "YES" : "NO"
+    }
+
+    return nil
+  }
+
+  private static func buildSettingBool(_ value: Any?) -> Bool? {
+    if let bool = value as? Bool {
+      return bool
+    }
+
+    if let string = buildSettingString(value)?.uppercased() {
+      switch string {
+      case "YES":
+        return true
+      case "NO":
+        return false
+      default:
+        return nil
+      }
     }
 
     return nil
