@@ -144,6 +144,8 @@ private extension HostedRenderState {
     testTargetName: String = "AppTests",
     runtimeDirectory: String = "/tmp/App/.snapview/runtime/host",
     logPath: String = "/tmp/App/.snapview/host.log",
+    destinationSpecifier: String = "platform=iOS Simulator,name=iPhone 15",
+    xctestrunPath: String = "/tmp/App/.snapview/AppTests.xctestrun",
     pid: Int = 42
   ) -> Self {
     HostedRenderState(
@@ -152,6 +154,8 @@ private extension HostedRenderState {
       testTargetName: testTargetName,
       runtimeDirectory: runtimeDirectory,
       logPath: logPath,
+      destinationSpecifier: destinationSpecifier,
+      xctestrunPath: xctestrunPath,
       pid: pid
     )
   }

@@ -16,6 +16,8 @@ struct HostStoreTests {
       testTargetName: "DemoTests",
       runtimeDirectory: "\(sourceRoot)/runtime",
       logPath: "\(sourceRoot)/host.log",
+      destinationSpecifier: "platform=iOS Simulator,OS=17.5,name=iPhone 15",
+      xctestrunPath: "/tmp/Demo.xctestrun",
       pid: 42
     )
 
@@ -40,6 +42,8 @@ struct HostStoreTests {
       testTargetName: "DemoTests",
       runtimeDirectory: runtimeDirectory,
       logPath: "\(sourceRoot)/host.log",
+      destinationSpecifier: "platform=iOS Simulator,OS=17.5,name=iPhone 15",
+      xctestrunPath: "/tmp/Demo.xctestrun",
       pid: Int(ProcessInfo.processInfo.processIdentifier)
     )
 
@@ -63,6 +67,8 @@ struct HostStoreTests {
       testTargetName: "DemoTests",
       runtimeDirectory: runtimeDirectory,
       logPath: "\(sourceRoot)/host.log",
+      destinationSpecifier: "platform=iOS Simulator,OS=17.5,name=iPhone 15",
+      xctestrunPath: "/tmp/Demo.xctestrun",
       pid: Int(ProcessInfo.processInfo.processIdentifier)
     )
 
