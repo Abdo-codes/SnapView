@@ -5,6 +5,26 @@ import Testing
 @Suite("BuildRunner")
 struct BuildRunnerTests {
 
+  @Test("build failures prefer actionable xcodebuild error lines")
+  func buildFailureDescriptionUsesActionableErrorLine() {
+    let output = """
+    Command line invocation:
+        /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild test-without-building ...
+
+    Build settings from command line:
+        CODE_SIGNING_ALLOWED = NO
+
+    2026-03-18 23:56:55.033 xcodebuild[64724:21046819] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+    /tmp/App/NotificationClient.swift:11: error: -[DemoTests.SnapViewRenderer test_render] : failed - Unimplemented: 'NotificationClient.cancelAll'
+    ** TEST EXECUTE FAILED **
+    """
+
+    let description = BuildRunner.Error.buildFailed(65, output).description
+
+    #expect(description.contains("NotificationClient.cancelAll"))
+    #expect(!description.contains("Command line invocation"))
+  }
+
   @Test("prefers an iPhone simulator for iOS schemes")
   func prefersIPhoneSimulator() throws {
     let output = """
