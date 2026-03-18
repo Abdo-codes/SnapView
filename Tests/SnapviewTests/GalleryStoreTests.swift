@@ -20,6 +20,8 @@ struct GalleryStoreTests {
           sourceFile: "Features/Dashboard/DashboardView.swift",
           imagePath: "/tmp/runtime/Dashboard.png",
           source: .runtimeFallback,
+          renderKind: .capture,
+          captureStrategy: .deeplink,
           warnings: ["copy-back failed"],
           updatedAt: Date(timeIntervalSince1970: 1_710_000_000)
         )
@@ -47,6 +49,8 @@ struct GalleryStoreTests {
           sourceFile: "Features/Settings/SettingsView.swift",
           imagePath: "/tmp/runtime/Settings.png",
           source: .copied,
+          renderKind: .preview,
+          captureStrategy: nil,
           warnings: [],
           updatedAt: Date(timeIntervalSince1970: 1_710_000_000)
         )
@@ -61,6 +65,8 @@ struct GalleryStoreTests {
           sourceFile: "Features/Dashboard/DashboardView.swift",
           imagePath: "/tmp/runtime/Dashboard.png",
           source: .runtimeFallback,
+          renderKind: .capture,
+          captureStrategy: .launch,
           warnings: ["copy-back failed"],
           updatedAt: Date(timeIntervalSince1970: 1_710_000_100)
         )
@@ -71,6 +77,10 @@ struct GalleryStoreTests {
     )
 
     #expect(updated.entries.count == 2)
+    #expect(updated.entries.first(where: { $0.previewName == "Dashboard" })?.renderKind == .capture)
+    #expect(updated.entries.first(where: { $0.previewName == "Dashboard" })?.captureStrategy == .launch)
+    #expect(updated.entries.first(where: { $0.previewName == "Settings" })?.renderKind == .preview)
+    #expect(updated.entries.first(where: { $0.previewName == "Settings" })?.captureStrategy == nil)
     let html = try String(contentsOfFile: GalleryStore.pagePath(sourceRoot: tempRoot.path))
     #expect(html.contains("Dashboard"))
     #expect(html.contains("Settings"))

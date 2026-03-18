@@ -11,13 +11,58 @@ struct GalleryEntry: Codable, Equatable {
   let sourceFile: String
   let imagePath: String
   let source: GalleryImageSource
+  let renderKind: GalleryRenderKind
+  let captureStrategy: GalleryCaptureStrategy?
   let warnings: [String]
   let updatedAt: Date
+
+  init(
+    previewName: String,
+    sourceFile: String,
+    imagePath: String,
+    source: GalleryImageSource,
+    renderKind: GalleryRenderKind = .preview,
+    captureStrategy: GalleryCaptureStrategy? = nil,
+    warnings: [String],
+    updatedAt: Date
+  ) {
+    self.previewName = previewName
+    self.sourceFile = sourceFile
+    self.imagePath = imagePath
+    self.source = source
+    self.renderKind = renderKind
+    self.captureStrategy = captureStrategy
+    self.warnings = warnings
+    self.updatedAt = updatedAt
+  }
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    previewName = try container.decode(String.self, forKey: .previewName)
+    sourceFile = try container.decode(String.self, forKey: .sourceFile)
+    imagePath = try container.decode(String.self, forKey: .imagePath)
+    source = try container.decode(GalleryImageSource.self, forKey: .source)
+    renderKind = try container.decodeIfPresent(GalleryRenderKind.self, forKey: .renderKind) ?? .preview
+    captureStrategy = try container.decodeIfPresent(GalleryCaptureStrategy.self, forKey: .captureStrategy)
+    warnings = try container.decode([String].self, forKey: .warnings)
+    updatedAt = try container.decode(Date.self, forKey: .updatedAt)
+  }
 }
 
 enum GalleryImageSource: String, Codable, Equatable {
   case copied
   case runtimeFallback
+}
+
+enum GalleryRenderKind: String, Codable, Equatable {
+  case preview
+  case capture
+}
+
+enum GalleryCaptureStrategy: String, Codable, Equatable {
+  case preview
+  case deeplink
+  case launch
 }
 
 enum GalleryStore {
