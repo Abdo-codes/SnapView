@@ -80,6 +80,8 @@ enum DoctorCommandRenderer {
       scheme: \(health.scheme)
       previews: \(health.previewCount)
       output: \(health.outputWritable ? "writable" : "runtime fallback")
+      Next: snapview watch --scheme \(health.scheme)
+      Gallery: snapview gallery --project \(health.project.projectPath)
       """
     }
 
@@ -99,7 +101,7 @@ enum DoctorCommandRenderer {
       for finding in findings {
         lines.append("- \(finding.message)")
         if let fix = finding.fix {
-          lines.append("  fix: \(fix)")
+          lines.append("  Suggested fix: \(fix)")
         }
       }
     }

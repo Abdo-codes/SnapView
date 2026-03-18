@@ -19,7 +19,16 @@ struct DoctorRunnerTests {
     )
 
     #expect(text.contains("[error]"))
-    #expect(text.contains("GENERATE_INFOPLIST_FILE"))
+    #expect(text.contains("Suggested fix: Set GENERATE_INFOPLIST_FILE = YES"))
+  }
+
+  @Test("formats healthy doctor output with next steps")
+  func doctorFormatsHealthyOutputWithNextSteps() {
+    let text = DoctorCommandRenderer.render(.fixture())
+
+    #expect(text.contains("[ok] snapview doctor found no blocking issues."))
+    #expect(text.contains("Next: snapview watch --scheme App"))
+    #expect(text.contains("Gallery: snapview gallery --project /tmp/App/App.xcodeproj"))
   }
 
   @Test("reports a missing generated Info.plist as a structured error")

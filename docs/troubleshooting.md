@@ -2,6 +2,20 @@
 
 This page covers the failure modes we hit while verifying `snapview` against external app projects such as Tateemi and Dawasah.
 
+## Recommended recovery flow
+
+Use this order before reaching for lower-level commands:
+
+```sh
+snapview doctor --scheme MyApp
+snapview watch --scheme MyApp
+snapview gallery
+```
+
+- `doctor` tells you what is broken and how to fix it.
+- `watch` is the default local loop and will bootstrap stale preparation state by running `prepare` when it can.
+- `gallery` prints or regenerates the current `.snapview/gallery.html` page.
+
 ## 1. `snapview list` only shows one screen
 
 Cause:
@@ -97,6 +111,10 @@ What this means:
 Cause:
 - `snapview prepare` refreshed the generated registry and test bundle, but the already-running host is still using the previous prepared artifacts.
 
+What `watch` does:
+- `watch` uses the shared host supervisor and restarts stale hosts after a successful `prepare`.
+- Manual host sessions you started outside `watch` still need manual restart if you are not using the watch loop.
+
 How to fix:
 
 ```sh
@@ -119,6 +137,10 @@ Cause:
 - The prepared metadata no longer matches the current project, scheme, or test target.
 - This usually happens after switching projects, changing the scheme, or regenerating test artifacts.
 
+What `watch` does:
+- `watch` treats stale preparation state as recoverable at startup and will run its own `prepare`.
+- Other blocking project errors, such as missing previews or broken test-target settings, still stop startup.
+
 How to fix:
 
 ```sh
@@ -127,7 +149,18 @@ snapview prepare --scheme MyApp
 
 If you are using the persistent host, restart it afterward.
 
-## 6. Swift 6 preview fixture code fails because preview stores cross actor boundaries
+## 6. `snapview watch` keeps retrying the same broken edit
+
+Expected behavior now:
+- `watch` should attempt one refresh cycle for a settled snapshot.
+- If that cycle fails, it should wait for the next file change before retrying.
+
+If it still appears to loop:
+- Confirm the edited files live under the watched app source root.
+- Check whether another tool is rewriting Swift files repeatedly.
+- Restart `watch`, then rerun `snapview doctor --scheme MyApp` to look for drift that is not tied to file mtimes.
+
+## 7. Swift 6 preview fixture code fails because preview stores cross actor boundaries
 
 Typical symptom:
 - You create helper preview stores in a shared fixture namespace, and Swift 6 rejects a `Store(...)` call with actor-isolation or non-Sendable errors.
@@ -154,7 +187,7 @@ enum MyPreviewData {
 
 This keeps preview-only store construction deterministic and Swift 6-safe.
 
-## 7. A view crashes under plain image rendering, especially with navigation
+## 8. A view crashes under plain image rendering, especially with navigation
 
 Typical symptom:
 - SwiftUI crashes while rendering previews that use `NavigationStack` or require a real UIKit hosting environment.
@@ -172,9 +205,10 @@ What to do if you still see a crash:
 
 When an external app project does not render correctly:
 
-1. Run `snapview list` and confirm the screen is actually covered by `#Preview`.
-2. Ensure the test target has a generated or real `Info.plist`.
-3. Run `snapview prepare --scheme <Scheme>`.
-4. Restart the persistent host if it was already running.
-5. Run `snapview render-all --scheme <Scheme>`.
-6. If `.snapview` is not writable, use the runtime output path reported by the command.
+1. Run `snapview doctor --scheme <Scheme>`.
+2. Run `snapview list` and confirm the screen is actually covered by `#Preview`.
+3. Ensure the test target has a generated or real `Info.plist`.
+4. Run `snapview watch --scheme <Scheme>` for the normal local loop, or `snapview prepare --scheme <Scheme>` if you are staying on explicit primitives.
+5. Restart the persistent host if you are using manual host commands and it was already running.
+6. Run `snapview render-all --scheme <Scheme>` if you need an explicit full refresh outside `watch`.
+7. If `.snapview` is not writable, use the runtime output path reported by the command or the paths embedded in `gallery.html`.

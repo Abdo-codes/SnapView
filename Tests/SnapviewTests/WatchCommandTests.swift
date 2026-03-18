@@ -5,6 +5,18 @@ import Testing
 @Suite("WatchCommand")
 struct WatchCommandTests {
 
+  @Test("formats startup banner with gallery guidance")
+  func formatsStartupBannerWithGalleryGuidance() {
+    let text = WatchCommandRenderer.startup(
+      appName: "App",
+      galleryPath: "/tmp/App/.snapview/gallery.html"
+    )
+
+    #expect(text.contains("Watching App for Swift changes. Press Ctrl-C to stop."))
+    #expect(text.contains("The first refresh can take longer while snapview prepares the test bundle."))
+    #expect(text.contains("Gallery: /tmp/App/.snapview/gallery.html"))
+  }
+
   @Test("stale preparation state is recoverable during watch startup")
   func stalePreparationStateIsRecoverable() {
     let health = ProjectHealth(

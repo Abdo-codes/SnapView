@@ -4,7 +4,7 @@ import Foundation
 struct WatchCommand: ParsableCommand {
   static let configuration = CommandConfiguration(
     commandName: "watch",
-    abstract: "Continuously prepare, host, and render previews as Swift files change."
+    abstract: "Run the local preview studio loop as Swift files change."
   )
 
   @Option(name: .long, help: "Xcode scheme to watch.")
@@ -95,8 +95,7 @@ struct WatchCommand: ParsableCommand {
       }
     )
 
-    print("Watching \(projectInfo.appName) for Swift changes. Press Ctrl-C to stop.")
-    print("Gallery: \(galleryPath)")
+    print(WatchCommandRenderer.startup(appName: projectInfo.appName, galleryPath: galleryPath))
 
     while true {
       do {
@@ -111,5 +110,15 @@ struct WatchCommand: ParsableCommand {
 
   static func startupBlockingFindings(_ health: ProjectHealth) -> [HealthFinding] {
     health.errors.filter { $0.code != .stalePreparationState }
+  }
+}
+
+enum WatchCommandRenderer {
+  static func startup(appName: String, galleryPath: String) -> String {
+    """
+    Watching \(appName) for Swift changes. Press Ctrl-C to stop.
+    The first refresh can take longer while snapview prepares the test bundle.
+    Gallery: \(galleryPath)
+    """
   }
 }
