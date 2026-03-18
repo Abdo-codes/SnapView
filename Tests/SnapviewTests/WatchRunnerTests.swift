@@ -94,6 +94,45 @@ struct WatchRunnerTests {
     #expect(events == ["prepare", "host", "render"])
   }
 
+  @Test("failed cycle is not retried until the snapshot changes")
+  func failedCycleWaitsForNextChange() throws {
+    let stable = FileSnapshot(files: ["DashboardView.swift": Date(timeIntervalSince1970: 1_000)])
+    let changed = FileSnapshot(files: ["DashboardView.swift": Date(timeIntervalSince1970: 2_000)])
+    var snapshots = [stable, stable, stable, changed, changed]
+    var prepareCalls = 0
+    var events: [String] = []
+
+    let runner = WatchRunner(
+      snapshot: { snapshots.removeFirst() },
+      sleep: { _ in },
+      prepare: {
+        prepareCalls += 1
+        if prepareCalls == 1 {
+          throw TestError.prepareFailed
+        }
+        events.append("prepare")
+        return preparedState()
+      },
+      ensureHost: { _ in
+        events.append("host")
+      },
+      renderAll: { _ in
+        events.append("render")
+      }
+    )
+
+    #expect(throws: TestError.prepareFailed) {
+      try runner.runSingleIteration()
+    }
+    let secondOutcome = try runner.runSingleIteration()
+    let thirdOutcome = try runner.runSingleIteration()
+
+    #expect(secondOutcome == .idle)
+    #expect(thirdOutcome == .rendered)
+    #expect(prepareCalls == 2)
+    #expect(events == ["prepare", "host", "render"])
+  }
+
   private func preparedState() -> PreparedRenderState {
     PreparedRenderState(
       scheme: "Demo",
@@ -106,4 +145,8 @@ struct WatchRunnerTests {
       preparedAt: Date(timeIntervalSince1970: 1_000)
     )
   }
+}
+
+private enum TestError: Error, Equatable {
+  case prepareFailed
 }

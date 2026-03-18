@@ -12,7 +12,7 @@ final class WatchRunner {
   private let prepare: () throws -> PreparedRenderState
   private let ensureHost: (PreparedRenderState) throws -> Void
   private let renderAll: (PreparedRenderState) throws -> Void
-  private var lastCompletedSnapshot: FileSnapshot?
+  private var lastHandledSnapshot: FileSnapshot?
 
   init(
     debounceInterval: TimeInterval = 0.25,
@@ -32,15 +32,15 @@ final class WatchRunner {
 
   func runSingleIteration() throws -> CycleOutcome {
     let currentSnapshot = try snapshot()
-    guard currentSnapshot != lastCompletedSnapshot else {
+    guard currentSnapshot != lastHandledSnapshot else {
       return .idle
     }
 
     let settledSnapshot = try debouncedSnapshot(startingAt: currentSnapshot)
+    lastHandledSnapshot = settledSnapshot
     let prepared = try prepare()
     try ensureHost(prepared)
     try renderAll(prepared)
-    lastCompletedSnapshot = settledSnapshot
     return .rendered
   }
 

@@ -36,7 +36,7 @@ struct WatchCommand: ParsableCommand {
     let health = try DoctorCommand.health(projectInfo: projectInfo, scheme: scheme)
     if !health.findings.isEmpty {
       print(DoctorCommandRenderer.render(health))
-      if !health.isHealthy {
+      if !Self.startupBlockingFindings(health).isEmpty {
         throw ExitCode.failure
       }
     }
@@ -107,5 +107,9 @@ struct WatchCommand: ParsableCommand {
 
       Thread.sleep(forTimeInterval: pollInterval)
     }
+  }
+
+  static func startupBlockingFindings(_ health: ProjectHealth) -> [HealthFinding] {
+    health.errors.filter { $0.code != .stalePreparationState }
   }
 }
