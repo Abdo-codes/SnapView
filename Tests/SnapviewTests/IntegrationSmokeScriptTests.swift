@@ -35,17 +35,39 @@ struct IntegrationSmokeScriptTests {
     #expect(FileManager.default.fileExists(atPath: fixture.pngPath))
 
     let invocations = try fixture.loggedInvocations()
-    #expect(invocations == fixture.expectedInvocations())
+    #expect(invocations == fixture.expectedInvocations(includeWatch: false, stopHost: true))
   }
 
-  @Test("accepts watch and keep-host flags without enabling watch behavior")
-  func acceptsWatchAndKeepHostFlags() throws {
+  @Test("watch mode waits for the first refresh marker before stopping host")
+  func watchModeWaitsForFirstRefreshMarkerBeforeStoppingHost() throws {
     let fixture = try SmokeFixture.make()
+    let startedAt = Date()
     let result = try fixture.run(
       arguments: [
         "--scheme", "Demo",
         "--project", fixture.projectPath,
         "--watch",
+      ]
+    )
+    let elapsed = Date().timeIntervalSince(startedAt)
+
+    #expect(result.terminationStatus == 0)
+    #expect(result.output.contains("==> doctor"))
+    #expect(result.output.contains("==> watch"))
+    #expect(result.output.contains("[watch] Updated 3 preview(s) in 1.0s."))
+    #expect(result.output.contains("==> gallery"))
+    #expect(elapsed < 3.0)
+    let invocations = try fixture.loggedInvocations()
+    #expect(invocations == fixture.expectedInvocations(includeWatch: true, stopHost: true))
+  }
+
+  @Test("keep-host skips host shutdown after a successful run")
+  func keepHostSkipsHostShutdownAfterSuccessfulRun() throws {
+    let fixture = try SmokeFixture.make()
+    let result = try fixture.run(
+      arguments: [
+        "--scheme", "Demo",
+        "--project", fixture.projectPath,
         "--keep-host",
       ]
     )
@@ -54,7 +76,30 @@ struct IntegrationSmokeScriptTests {
     #expect(result.output.contains("==> doctor"))
     #expect(result.output.contains("==> gallery"))
     let invocations = try fixture.loggedInvocations()
-    #expect(invocations == fixture.expectedInvocations())
+    #expect(invocations == fixture.expectedInvocations(includeWatch: false, stopHost: false))
+  }
+
+  @Test("failure during the main workflow still stops host by default")
+  func failureDuringMainWorkflowStillStopsHostByDefault() throws {
+    let fixture = try SmokeFixture.make(failRenderAll: true)
+    let result = try fixture.run(
+      arguments: [
+        "--scheme", "Demo",
+        "--project", fixture.projectPath,
+      ]
+    )
+
+    #expect(result.terminationStatus != 0)
+    #expect(result.output.contains("==> render-all"))
+    let invocations = try fixture.loggedInvocations()
+    #expect(
+      invocations == [
+        ["doctor", "--project", fixture.projectPath, "--scheme", "Demo"],
+        ["prepare", "--project", fixture.projectPath, "--scheme", "Demo"],
+        ["render-all", "--project", fixture.projectPath, "--scheme", "Demo"],
+        ["host", "stop", "--project", fixture.projectPath],
+      ]
+    )
   }
 
   @Test("fails if gallery.html is missing")
@@ -94,12 +139,16 @@ private struct SmokeFixture {
   let commandLogPath: String
   let galleryPath: String
   let pngPath: String
+  let watchExitAfterSeconds: String
   let createGallery: Bool
   let createPNG: Bool
+  let failRenderAll: Bool
 
   static func make(
     createGallery: Bool = true,
-    createPNG: Bool = true
+    createPNG: Bool = true,
+    watchExitAfterSeconds: String = "5",
+    failRenderAll: Bool = false
   ) throws -> SmokeFixture {
     let fm = FileManager.default
     let rootURL = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
@@ -128,8 +177,10 @@ private struct SmokeFixture {
       commandLogPath: commandLogPath,
       galleryPath: galleryPath,
       pngPath: pngPath,
+      watchExitAfterSeconds: watchExitAfterSeconds,
       createGallery: createGallery,
-      createPNG: createPNG
+      createPNG: createPNG,
+      failRenderAll: failRenderAll
     )
     return fixture
   }
@@ -144,6 +195,8 @@ private struct SmokeFixture {
     environment["SMOKE_EXPECT_SCHEME"] = "Demo"
     environment["SMOKE_CREATE_GALLERY"] = createGallery ? "1" : "0"
     environment["SMOKE_CREATE_PNG"] = createPNG ? "1" : "0"
+    environment["SMOKE_WATCH_EXIT_AFTER_SECONDS"] = watchExitAfterSeconds
+    environment["SMOKE_FAIL_RENDER_ALL"] = failRenderAll ? "1" : "0"
 
     let result = try ProcessRunner.run(
       executableURL: URL(filePath: "/bin/sh"),
@@ -159,13 +212,23 @@ private struct SmokeFixture {
     return Self.parseInvocations(from: data)
   }
 
-  func expectedInvocations() -> [[String]] {
-    [
+  func expectedInvocations(includeWatch: Bool, stopHost: Bool) -> [[String]] {
+    var invocations: [[String]] = [
       ["doctor", "--project", projectPath, "--scheme", "Demo"],
       ["prepare", "--project", projectPath, "--scheme", "Demo"],
       ["render-all", "--project", projectPath, "--scheme", "Demo"],
       ["gallery", "--project", projectPath],
     ]
+
+    if includeWatch {
+      invocations.append(["watch", "--project", projectPath, "--scheme", "Demo"])
+    }
+
+    if stopHost {
+      invocations.append(["host", "stop", "--project", projectPath])
+    }
+
+    return invocations
   }
 
   private static func parseInvocations(from data: Data) -> [[String]] {

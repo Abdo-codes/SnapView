@@ -20,12 +20,40 @@ run_step() {
   "$@"
 }
 
+stop_host() {
+  if [ -n "$test_target" ]; then
+    "$snapview_bin" host stop "$input_flag" "$input_path" --test-target "$test_target"
+  else
+    "$snapview_bin" host stop "$input_flag" "$input_path"
+  fi
+}
+
+cleanup() {
+  if [ -n "${watch_pid:-}" ]; then
+    kill "$watch_pid" 2>/dev/null || true
+    wait "$watch_pid" 2>/dev/null || true
+  fi
+
+  if [ -n "${watch_log:-}" ] && [ -f "$watch_log" ]; then
+    rm -f "$watch_log"
+  fi
+
+  if [ "${entered_workflow:-0}" -eq 1 ] && [ "${host_stopped:-0}" -eq 0 ] && [ "$keep_host" -eq 0 ]; then
+    stop_host
+    host_stopped=1
+  fi
+}
+
 scheme=''
 project_path=''
 workspace_path=''
 test_target=''
 watch_requested=0
 keep_host=0
+entered_workflow=0
+host_stopped=0
+watch_pid=''
+watch_log=''
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -89,6 +117,9 @@ else
   input_path=$workspace_path
 fi
 
+trap cleanup EXIT INT TERM
+entered_workflow=1
+
 if [ -n "$test_target" ]; then
   run_step doctor "$snapview_bin" doctor "$input_flag" "$input_path" --scheme "$scheme" --test-target "$test_target"
   run_step prepare "$snapview_bin" prepare "$input_flag" "$input_path" --scheme "$scheme" --test-target "$test_target"
@@ -118,4 +149,38 @@ done
 if [ "$found_png" -eq 0 ]; then
   printf 'Expected at least one .png in %s\n' "$source_root/.snapview" >&2
   exit 1
+fi
+
+trap cleanup EXIT INT TERM
+
+if [ "$watch_requested" -eq 1 ]; then
+  watch_log=$(mktemp "${TMPDIR:-/tmp}/snapview-watch.XXXXXX")
+  : > "$watch_log"
+
+  printf '==> watch\n'
+  if [ -n "$test_target" ]; then
+    "$snapview_bin" watch "$input_flag" "$input_path" --scheme "$scheme" --test-target "$test_target" >"$watch_log" 2>&1 &
+  else
+    "$snapview_bin" watch "$input_flag" "$input_path" --scheme "$scheme" >"$watch_log" 2>&1 &
+  fi
+  watch_pid=$!
+
+  while :; do
+    if grep -Fq '[watch] Updated' "$watch_log"; then
+      break
+    fi
+
+    if ! kill -0 "$watch_pid" 2>/dev/null; then
+      printf 'watch exited before emitting a refresh marker\n' >&2
+      exit 1
+    fi
+
+    sleep 0.05
+  done
+
+  kill "$watch_pid" 2>/dev/null || true
+  wait "$watch_pid" 2>/dev/null || true
+  watch_pid=''
+
+  cat "$watch_log"
 fi

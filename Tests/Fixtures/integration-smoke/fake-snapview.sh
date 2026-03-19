@@ -9,6 +9,8 @@ expected_scheme="${SMOKE_EXPECT_SCHEME:?SMOKE_EXPECT_SCHEME is required}"
 expected_test_target="${SMOKE_EXPECT_TEST_TARGET:-}"
 create_gallery="${SMOKE_CREATE_GALLERY:-1}"
 create_png="${SMOKE_CREATE_PNG:-1}"
+watch_exit_after_seconds="${SMOKE_WATCH_EXIT_AFTER_SECONDS:-5}"
+fail_render_all="${SMOKE_FAIL_RENDER_ALL:-0}"
 
 log_invocation() {
   for arg in "$@"; do
@@ -79,6 +81,30 @@ expect_gallery_args_with_test_target() {
   expect_arg "$4" "$expected_test_target" "$command_name test target"
 }
 
+expect_host_stop_args_without_test_target() {
+  command_name=$1
+  shift
+  if [ "$#" -ne 2 ]; then
+    printf '%s expected 2 arguments, got %s\n' "$command_name" "$#" >&2
+    exit 64
+  fi
+  expect_arg "$1" "$expected_input_flag" "$command_name input flag"
+  expect_arg "$2" "$expected_input_path" "$command_name input path"
+}
+
+expect_host_stop_args_with_test_target() {
+  command_name=$1
+  shift
+  if [ "$#" -ne 4 ]; then
+    printf '%s expected 4 arguments, got %s\n' "$command_name" "$#" >&2
+    exit 64
+  fi
+  expect_arg "$1" "$expected_input_flag" "$command_name input flag"
+  expect_arg "$2" "$expected_input_path" "$command_name input path"
+  expect_arg "$3" "--test-target" "$command_name test-target flag"
+  expect_arg "$4" "$expected_test_target" "$command_name test target"
+}
+
 command="${1:-}"
 shift || true
 
@@ -108,6 +134,10 @@ case "$command" in
       expect_exact_args_without_test_target render-all "$@"
     fi
     log_invocation "$command" "$@"
+    if [ "$fail_render_all" = "1" ]; then
+      printf 'render-all failed intentionally\n' >&2
+      exit 70
+    fi
     if [ "$create_png" = "1" ]; then
       mkdir -p "$project_root/.snapview"
       : > "$project_root/.snapview/Smoke.png"
@@ -126,6 +156,35 @@ case "$command" in
       : > "$project_root/.snapview/gallery.html"
     fi
     printf 'Gallery: %s/.snapview/gallery.html\n' "$project_root"
+    ;;
+  watch)
+    if [ -n "$expected_test_target" ]; then
+      expect_exact_args_with_test_target watch "$@"
+    else
+      expect_exact_args_without_test_target watch "$@"
+    fi
+    log_invocation "$command" "$@"
+    printf '[watch] Updated 3 preview(s) in 1.0s.\n'
+    sleep "$watch_exit_after_seconds"
+    ;;
+  host)
+    subcommand="${1:-}"
+    shift || true
+    case "$subcommand" in
+      stop)
+        if [ -n "$expected_test_target" ]; then
+          expect_host_stop_args_with_test_target "host stop" "$@"
+        else
+          expect_host_stop_args_without_test_target "host stop" "$@"
+        fi
+        log_invocation "$command" "$subcommand" "$@"
+        printf 'Persistent host stopped.\n'
+        ;;
+      *)
+        printf 'unknown host subcommand: %s\n' "$subcommand" >&2
+        exit 64
+        ;;
+    esac
     ;;
   *)
     printf 'unknown command: %s\n' "$command" >&2
