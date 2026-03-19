@@ -35,7 +35,7 @@ The user experience should become:
 
 1. Run `snapview doctor --scheme MyApp` when onboarding or when something breaks.
 2. Run `snapview watch --scheme MyApp` while editing previews and views.
-3. View a stable generated gallery instead of manually opening PNGs.
+3. Use `snapview gallery` to print or regenerate the stable generated gallery page instead of manually opening PNGs.
 
 The existing commands remain, but they stop being the primary mental model for normal use.
 
@@ -63,6 +63,8 @@ Each finding should have:
 - human-readable explanation
 - suggested fix
 
+The healthy output should also point to the next local actions, especially `snapview watch --scheme ...` and `snapview gallery`.
+
 ### `snapview watch`
 
 `watch` becomes the local studio loop. It should:
@@ -72,7 +74,9 @@ Each finding should have:
 - rerun `prepare` when Swift source changes affect the app/test bundle
 - restart the persistent host after successful preparation
 - rerender the preview set and refresh the gallery manifest
-- optionally open the gallery the first time renders succeed
+- print the gallery path prominently at startup and after each successful refresh
+- treat stale preparation state as recoverable at startup so fresh projects can bootstrap themselves
+- avoid retrying the same failed snapshot until the watched files change again
 
 The first implementation should optimize for determinism over sophistication:
 
@@ -87,7 +91,7 @@ That is intentionally simpler than dependency-aware incremental rendering. The p
 
 - generate `.snapview/gallery.html`
 - be backed by `.snapview/gallery.json`
-- optionally open the gallery in the default browser
+- print the current gallery path, regenerating the HTML from `gallery.json` if needed
 
 The browser-facing HTML should be generic. The manifest is the source of truth. The generated page can embed the manifest at generation time to avoid `file://` fetch restrictions.
 

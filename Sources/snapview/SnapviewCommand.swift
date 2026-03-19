@@ -11,6 +11,7 @@ struct Snapview: ParsableCommand {
       GalleryCommand.self,
       PrepareCommand.self,
       HostCommand.self,
+      WatchCommand.self,
       RenderCommand.self,
       RenderAllCommand.self,
       ListCommand.self,

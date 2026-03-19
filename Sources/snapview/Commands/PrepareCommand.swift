@@ -20,6 +20,25 @@ struct PrepareCommand: ParsableCommand {
     let projectInfo = try ProjectDetector.detect(
       projectPath: project, workspacePath: workspace, testTarget: testTarget
     )
+    _ = try Self.performPreparation(
+      projectInfo: projectInfo,
+      scheme: scheme,
+      simulator: simulator,
+      verbose: verbose,
+      report: { print($0) }
+    )
+    print("snapview is prepared.")
+    print("Run: snapview render <ViewName> --scheme \(scheme)")
+  }
+
+  @discardableResult
+  static func performPreparation(
+    projectInfo: ProjectInfo,
+    scheme: String,
+    simulator: String?,
+    verbose: Bool,
+    report: (String) -> Void
+  ) throws -> PreparedRenderState {
     try ProjectValidator.validateRenderPrerequisites(project: projectInfo, scheme: scheme)
 
     let rendererPath = "\(projectInfo.sourceRoot)/\(projectInfo.testTargetName)/SnapViewRenderer.swift"
@@ -27,14 +46,14 @@ struct PrepareCommand: ParsableCommand {
       throw CleanExit.message("[snapview:error] Not initialized. Run: snapview init --scheme \(scheme)")
     }
 
-    print("[1/4] Scanning all #Preview blocks...")
+    report("[1/4] Scanning all #Preview blocks...")
     let allEntries = RenderCommand.scanProject(sourceRoot: projectInfo.sourceRoot, appName: projectInfo.appName)
     guard !allEntries.isEmpty else {
-      throw CleanExit.message("[snapview:error] No #Preview blocks found in project.")
+      throw CleanExit.message(RenderMessaging.noPreviewsFound())
     }
-    print("       Found \(allEntries.count) previews.")
+    report("       Found \(allEntries.count) previews.")
 
-    print("[2/4] Regenerating full SnapViewRegistry.swift...")
+    report("[2/4] Regenerating full SnapViewRegistry.swift...")
     let allImports = Set(allEntries.flatMap { entry in
       let fullPath = "\(projectInfo.sourceRoot)/\(projectInfo.appName)/\(entry.filePath)"
       let source = (try? String(contentsOfFile: fullPath, encoding: .utf8)) ?? ""
@@ -48,7 +67,7 @@ struct PrepareCommand: ParsableCommand {
     let registryPath = "\(projectInfo.sourceRoot)/\(projectInfo.testTargetName)/SnapViewRegistry.swift"
     try registry.write(toFile: registryPath, atomically: true, encoding: .utf8)
 
-    print("[3/4] Building test artifacts...")
+    report("[3/4] Building test artifacts...")
     let state = try BuildRunner.prepare(
       scheme: scheme,
       project: projectInfo,
@@ -56,9 +75,8 @@ struct PrepareCommand: ParsableCommand {
       verbose: verbose
     )
 
-    print("[4/4] Saving preparation metadata...\n")
+    report("[4/4] Saving preparation metadata...\n")
     try PreparationStore.save(state, sourceRoot: projectInfo.sourceRoot)
-    print("snapview is prepared.")
-    print("Run: snapview render <ViewName> --scheme \(scheme)")
+    return state
   }
 }

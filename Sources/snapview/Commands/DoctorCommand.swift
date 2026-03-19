@@ -20,6 +20,11 @@ struct DoctorCommand: ParsableCommand {
       workspacePath: workspace,
       testTarget: testTarget
     )
+    let health = try Self.health(projectInfo: projectInfo, scheme: scheme)
+    print(DoctorCommandRenderer.render(health))
+  }
+
+  static func health(projectInfo: ProjectInfo, scheme: String) throws -> ProjectHealth {
     let previewEntries = RenderCommand.scanProject(
       sourceRoot: projectInfo.sourceRoot,
       appName: projectInfo.appName
@@ -28,10 +33,9 @@ struct DoctorCommand: ParsableCommand {
     let hostState = try HostStore.loadIfPresent(sourceRoot: projectInfo.sourceRoot)
     let outputWritable = Self.isOutputWritable(sourceRoot: projectInfo.sourceRoot)
 
-    let health: ProjectHealth
     do {
       let buildSettings = try ProjectValidator.testTargetBuildSettings(project: projectInfo)
-      health = try DoctorRunner.run(
+      return try DoctorRunner.run(
         project: projectInfo,
         scheme: scheme,
         previewEntries: previewEntries,
@@ -41,7 +45,7 @@ struct DoctorCommand: ParsableCommand {
         outputWritable: outputWritable
       )
     } catch ProjectValidator.Error.missingTestTarget(let targetName, _) {
-      health = ProjectHealth(
+      return ProjectHealth(
         project: projectInfo,
         scheme: scheme,
         previewCount: previewEntries.count,
@@ -56,11 +60,9 @@ struct DoctorCommand: ParsableCommand {
         ]
       )
     }
-
-    print(DoctorCommandRenderer.render(health))
   }
 
-  private static func isOutputWritable(sourceRoot: String) -> Bool {
+  static func isOutputWritable(sourceRoot: String) -> Bool {
     let fm = FileManager.default
     let outputPath = "\(sourceRoot)/.snapview"
     if fm.fileExists(atPath: outputPath) {
@@ -78,6 +80,8 @@ enum DoctorCommandRenderer {
       scheme: \(health.scheme)
       previews: \(health.previewCount)
       output: \(health.outputWritable ? "writable" : "runtime fallback")
+      Next: snapview watch --scheme \(health.scheme)
+      Gallery: snapview gallery --project \(health.project.projectPath)
       """
     }
 
@@ -97,7 +101,7 @@ enum DoctorCommandRenderer {
       for finding in findings {
         lines.append("- \(finding.message)")
         if let fix = finding.fix {
-          lines.append("  fix: \(fix)")
+          lines.append("  Suggested fix: \(fix)")
         }
       }
     }

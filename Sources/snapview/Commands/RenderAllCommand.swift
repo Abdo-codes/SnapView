@@ -29,27 +29,73 @@ struct RenderAllCommand: ParsableCommand {
     let prepared = try PreparationStore.load(sourceRoot: projectInfo.sourceRoot)
     try PreparationStore.validate(prepared, project: projectInfo, scheme: scheme)
 
+    let request = RenderAllRequest(
+      scheme: scheme,
+      projectInfo: projectInfo,
+      prepared: prepared,
+      device: device,
+      scale: scale,
+      output: output,
+      simulator: simulator,
+      rtl: rtl,
+      locale: locale,
+      verbose: verbose
+    )
+    let result = try Self.perform(request: request, report: { print($0) })
+    print("[4/4] Done (\(result.elapsed)s).\n")
+    for path in result.imagePaths {
+      print("  \(path)")
+    }
+  }
+}
+
+struct RenderAllRequest {
+  let scheme: String
+  let projectInfo: ProjectInfo
+  let prepared: PreparedRenderState
+  let device: String
+  let scale: Double
+  let output: String
+  let simulator: String?
+  let rtl: Bool
+  let locale: String
+  let verbose: Bool
+}
+
+struct RenderAllResult {
+  let imagePaths: [String]
+  let elapsed: String
+}
+
+extension RenderAllCommand {
+  static func perform(
+    request: RenderAllRequest,
+    report: (String) -> Void
+  ) throws -> RenderAllResult {
+    let projectInfo = request.projectInfo
+    let prepared = request.prepared
+
     let rendererPath = "\(projectInfo.sourceRoot)/\(projectInfo.testTargetName)/SnapViewRenderer.swift"
     guard FileManager.default.fileExists(atPath: rendererPath) else {
-      throw CleanExit.message("[snapview:error] Not initialized. Run: snapview init --scheme \(scheme)")
+      throw CleanExit.message("[snapview:error] Not initialized. Run: snapview init --scheme \(request.scheme)")
     }
 
-    print("[1/4] Scanning all #Preview blocks...")
+    report("[1/4] Scanning all #Preview blocks...")
     let allEntries = RenderCommand.scanProject(sourceRoot: projectInfo.sourceRoot, appName: projectInfo.appName)
     guard !allEntries.isEmpty else {
       throw CleanExit.message(RenderMessaging.noPreviewsFound())
     }
-    print("       Found \(allEntries.count) previews.")
+    report("       Found \(allEntries.count) previews.")
 
-    print("[2/4] Loading prepared test artifacts...")
-    print("       \(prepared.destinationSpecifier)")
+    report("[2/4] Loading prepared test artifacts...")
+    report("       \(prepared.destinationSpecifier)")
 
-    let (width, height) = RenderCommand.deviceDimensions(device)
+    let (width, height) = RenderCommand.deviceDimensions(request.device)
     let startTime = Date()
     let options = BuildRunner.Options(
-      scheme: scheme, project: projectInfo, viewNames: [],
-      scale: scale, width: width, height: height,
-      rtl: rtl, locale: locale, simulator: simulator, verbose: verbose
+      scheme: request.scheme, project: projectInfo, viewNames: [],
+      scale: request.scale, width: width, height: height,
+      rtl: request.rtl, locale: request.locale, simulator: request.simulator, verbose: request.verbose
     )
     let renderedOutputPath: String
 
@@ -58,7 +104,7 @@ struct RenderAllCommand: ParsableCommand {
       sourceRoot: projectInfo.sourceRoot,
       existingHost: try HostStore.loadIfPresent(sourceRoot: projectInfo.sourceRoot)
     ) {
-      print("[3/4] Rendering through persistent host...")
+      report("[3/4] Rendering through persistent host...")
       do {
         let response = try HostRuntime.requestRender(
           .init(viewNames: [], options: options),
@@ -72,27 +118,27 @@ struct RenderAllCommand: ParsableCommand {
       } catch let error as CleanExit {
         throw error
       } catch {
-        print("       Host unavailable, falling back to cached test bundle...")
+        report("       Host unavailable, falling back to cached test bundle...")
         renderedOutputPath = try BuildRunner.runPrepared(options: options, prepared: prepared)
       }
     } else {
-      print("[3/4] Running cached test bundle...")
+      report("[3/4] Running cached test bundle...")
       renderedOutputPath = try BuildRunner.runPrepared(options: options, prepared: prepared)
     }
     let elapsed = String(format: "%.1f", Date().timeIntervalSince(startTime))
 
-    let outputDir = "\(projectInfo.sourceRoot)/\(output)"
+    let outputDir = "\(projectInfo.sourceRoot)/\(request.output)"
     let finalized = try RenderedOutputFinalizer.finalize(
       renderedOutputPath: renderedOutputPath,
       outputDir: outputDir
     )
     if finalized.usedRuntimeFallback {
-      print("       Warning: couldn't copy PNGs to \(outputDir); using runtime output instead.")
+      report("       Warning: couldn't copy PNGs to \(outputDir); using runtime output instead.")
       for warning in finalized.warnings {
-        print("       \(warning)")
+        report("       \(warning)")
       }
     }
-    let paths = finalized.imagePaths
+
     let galleryEntries = RenderCommand.galleryEntries(
       from: allEntries,
       finalized: finalized,
@@ -101,11 +147,11 @@ struct RenderAllCommand: ParsableCommand {
     _ = try GalleryStore.persist(
       entries: galleryEntries,
       projectPath: projectInfo.projectPath,
-      scheme: scheme,
+      scheme: request.scheme,
       sourceRoot: projectInfo.sourceRoot,
       mergeWithExisting: false
     )
-    print("[4/4] Done (\(elapsed)s).\n")
-    for path in paths { print("  \(path)") }
+
+    return RenderAllResult(imagePaths: finalized.imagePaths, elapsed: elapsed)
   }
 }
