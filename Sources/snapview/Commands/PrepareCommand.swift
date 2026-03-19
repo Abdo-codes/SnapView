@@ -7,6 +7,8 @@ struct PrepareCommand: ParsableCommand {
     abstract: "Generate the full preview registry and build test artifacts for fast renders."
   )
 
+  @OptionGroup var globalOptions: GlobalOptions
+
   @Option(name: .long, help: "Xcode scheme to build.")
   var scheme: String
 
@@ -20,15 +22,27 @@ struct PrepareCommand: ParsableCommand {
     let projectInfo = try ProjectDetector.detect(
       projectPath: project, workspacePath: workspace, testTarget: testTarget
     )
-    _ = try Self.performPreparation(
+    let report: (String) -> Void = globalOptions.json ? { _ in } : { print($0) }
+    let state = try Self.performPreparation(
       projectInfo: projectInfo,
       scheme: scheme,
       simulator: simulator,
       verbose: verbose,
-      report: { print($0) }
+      report: report
     )
-    print("snapview is prepared.")
-    print("Run: snapview render <ViewName> --scheme \(scheme)")
+
+    if globalOptions.json {
+      let data = PrepareJSONData(
+        scheme: state.scheme,
+        testTarget: state.testTargetName,
+        xctestrunPath: state.xctestrunPath,
+        preparedAt: state.preparedAt
+      )
+      print(JSONOutput.success(command: "prepare", data: data))
+    } else {
+      print("snapview is prepared.")
+      print("Run: snapview render <ViewName> --scheme \(scheme)")
+    }
   }
 
   @discardableResult
@@ -79,4 +93,11 @@ struct PrepareCommand: ParsableCommand {
     try PreparationStore.save(state, sourceRoot: projectInfo.sourceRoot)
     return state
   }
+}
+
+struct PrepareJSONData: Encodable {
+  let scheme: String
+  let testTarget: String
+  let xctestrunPath: String
+  let preparedAt: Date
 }

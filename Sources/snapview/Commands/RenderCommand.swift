@@ -7,6 +7,8 @@ struct RenderCommand: ParsableCommand {
     abstract: "Render #Preview entries matching a view name or preview name."
   )
 
+  @OptionGroup var globalOptions: GlobalOptions
+
   @Argument(help: "View name or preview name to render. The view must be covered by a #Preview.")
   var viewName: String
 
@@ -39,21 +41,26 @@ struct RenderCommand: ParsableCommand {
     }
 
     let (width, height) = Self.deviceDimensions(device)
+    let report: (String) -> Void = globalOptions.json ? { _ in } : { print($0) }
 
     // Step 1: Scan for previews
-    print("[1/4] Scanning for #Preview blocks matching \"\(viewName)\"...")
+    report("[1/4] Scanning for #Preview blocks matching \"\(viewName)\"...")
     let allEntries = Self.scanProject(sourceRoot: projectInfo.sourceRoot, appName: projectInfo.appName)
     let matched = PreviewMatcher.match(viewName: viewName, entries: allEntries)
 
     guard !matched.isEmpty else {
+      if globalOptions.json {
+        print(JSONOutput.failure(command: "render", error: "No #Preview found for \"\(viewName)\" in project sources."))
+        throw ExitCode.failure
+      }
       throw CleanExit.message(RenderMessaging.previewNotFound(viewName: viewName))
     }
 
     let names = matched.map(\.name).joined(separator: ", ")
-    print("       Found: \(matched[0].filePath) → \(names)")
+    report("       Found: \(matched[0].filePath) → \(names)")
 
-    print("[2/4] Loading prepared test artifacts...")
-    print("       \(prepared.destinationSpecifier)")
+    report("[2/4] Loading prepared test artifacts...")
+    report("       \(prepared.destinationSpecifier)")
 
     let startTime = Date()
     let options = BuildRunner.Options(
@@ -68,7 +75,7 @@ struct RenderCommand: ParsableCommand {
       sourceRoot: projectInfo.sourceRoot,
       existingHost: try HostStore.loadIfPresent(sourceRoot: projectInfo.sourceRoot)
     ) {
-      print("[3/4] Rendering through persistent host...")
+      report("[3/4] Rendering through persistent host...")
       do {
         let response = try HostRuntime.requestRender(
           .init(viewNames: matched.map(\.name), options: options),
@@ -82,11 +89,11 @@ struct RenderCommand: ParsableCommand {
       } catch let error as CleanExit {
         throw error
       } catch {
-        print("       Host unavailable, falling back to cached test bundle...")
+        report("       Host unavailable, falling back to cached test bundle...")
         renderedOutputPath = try BuildRunner.runPrepared(options: options, prepared: prepared)
       }
     } else {
-      print("[3/4] Running cached test bundle...")
+      report("[3/4] Running cached test bundle...")
       renderedOutputPath = try BuildRunner.runPrepared(options: options, prepared: prepared)
     }
     let elapsed = String(format: "%.1f", Date().timeIntervalSince(startTime))
@@ -98,9 +105,9 @@ struct RenderCommand: ParsableCommand {
       outputDir: outputDir
     )
     if finalized.usedRuntimeFallback {
-      print("       Warning: couldn't copy PNGs to \(outputDir); using runtime output instead.")
+      report("       Warning: couldn't copy PNGs to \(outputDir); using runtime output instead.")
       for warning in finalized.warnings {
-        print("       \(warning)")
+        report("       \(warning)")
       }
     }
     let paths = finalized.imagePaths
@@ -116,10 +123,22 @@ struct RenderCommand: ParsableCommand {
       sourceRoot: projectInfo.sourceRoot,
       mergeWithExisting: true
     )
-    print("[4/4] Done (\(elapsed)s).\n")
 
-    for path in paths {
-      print("  \(path)")
+    if globalOptions.json {
+      let data = RenderJSONData(
+        viewName: viewName,
+        matchedPreviews: matched.map(\.name),
+        imagePaths: paths,
+        elapsed: elapsed,
+        usedRuntimeFallback: finalized.usedRuntimeFallback,
+        warnings: finalized.warnings
+      )
+      print(JSONOutput.success(command: "render", data: data))
+    } else {
+      print("[4/4] Done (\(elapsed)s).\n")
+      for path in paths {
+        print("  \(path)")
+      }
     }
   }
 
@@ -179,4 +198,13 @@ struct RenderCommand: ParsableCommand {
       )
     }
   }
+}
+
+struct RenderJSONData: Encodable {
+  let viewName: String
+  let matchedPreviews: [String]
+  let imagePaths: [String]
+  let elapsed: String
+  let usedRuntimeFallback: Bool
+  let warnings: [String]
 }

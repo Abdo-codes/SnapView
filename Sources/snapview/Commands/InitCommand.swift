@@ -7,6 +7,8 @@ struct InitCommand: ParsableCommand {
     abstract: "One-time setup — adds renderer to test target."
   )
 
+  @OptionGroup var globalOptions: GlobalOptions
+
   @Option(name: .long, help: "Xcode scheme to build.")
   var scheme: String
 
@@ -20,13 +22,15 @@ struct InitCommand: ParsableCommand {
   var testTarget: String?
 
   func run() throws {
-    print("[1/4] Detecting project...")
+    let report: (String) -> Void = globalOptions.json ? { _ in } : { print($0) }
+
+    report("[1/4] Detecting project...")
     let projectInfo = try ProjectDetector.detect(
       projectPath: project, workspacePath: workspace, testTarget: testTarget
     )
-    print("       \(URL(filePath: projectInfo.projectPath).lastPathComponent)")
+    report("       \(URL(filePath: projectInfo.projectPath).lastPathComponent)")
 
-    print("[2/4] Finding test target... \(projectInfo.testTargetName)")
+    report("[2/4] Finding test target... \(projectInfo.testTargetName)")
 
     if XcodeDetector.isXcodeOpen(projectPath: projectInfo.projectPath) {
       FileHandle.standardError.write(Data(
@@ -34,11 +38,24 @@ struct InitCommand: ParsableCommand {
       ))
     }
 
-    print("[3/4] Adding SnapViewRenderer.swift and SnapViewRegistry.swift...")
+    report("[3/4] Adding SnapViewRenderer.swift and SnapViewRegistry.swift...")
     try ProjectInjector.inject(project: projectInfo)
 
-    print("[4/4] Done.\n")
-    print("snapview is ready. Run: snapview prepare --scheme \(scheme)")
-    print("Tip: Add .snapview/ to your .gitignore.")
+    if globalOptions.json {
+      let data = InitJSONData(
+        projectPath: projectInfo.projectPath,
+        testTarget: projectInfo.testTargetName
+      )
+      print(JSONOutput.success(command: "init", data: data))
+    } else {
+      print("[4/4] Done.\n")
+      print("snapview is ready. Run: snapview prepare --scheme \(scheme)")
+      print("Tip: Add .snapview/ to your .gitignore.")
+    }
   }
+}
+
+struct InitJSONData: Encodable {
+  let projectPath: String
+  let testTarget: String
 }

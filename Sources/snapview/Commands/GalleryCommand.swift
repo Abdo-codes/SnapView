@@ -7,6 +7,8 @@ struct GalleryCommand: ParsableCommand {
     abstract: "Print or regenerate the local gallery page path."
   )
 
+  @OptionGroup var globalOptions: GlobalOptions
+
   @Option(name: .long) var project: String?
   @Option(name: .long) var workspace: String?
   @Option(name: .long) var testTarget: String?
@@ -26,7 +28,15 @@ struct GalleryCommand: ParsableCommand {
       regenerated = true
     }
 
-    print(GalleryCommandRenderer.render(pagePath: pagePath, regenerated: regenerated))
+    if globalOptions.json {
+      let data = GalleryJSONData(
+        pagePath: pagePath,
+        regenerated: regenerated
+      )
+      print(JSONOutput.success(command: "gallery", data: data))
+    } else {
+      print(GalleryCommandRenderer.render(pagePath: pagePath, regenerated: regenerated))
+    }
   }
 }
 
@@ -41,4 +51,9 @@ enum GalleryCommandRenderer {
 
     return "Gallery: \(pagePath)"
   }
+}
+
+struct GalleryJSONData: Encodable {
+  let pagePath: String
+  let regenerated: Bool
 }

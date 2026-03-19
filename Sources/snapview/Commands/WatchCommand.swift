@@ -7,6 +7,8 @@ struct WatchCommand: ParsableCommand {
     abstract: "Run the local preview studio loop as Swift files change."
   )
 
+  @OptionGroup var globalOptions: GlobalOptions
+
   @Option(name: .long, help: "Xcode scheme to watch.")
   var scheme: String
 

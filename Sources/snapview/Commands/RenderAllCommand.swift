@@ -7,6 +7,8 @@ struct RenderAllCommand: ParsableCommand {
     abstract: "Render all discovered #Preview blocks in the project."
   )
 
+  @OptionGroup var globalOptions: GlobalOptions
+
   @Option(name: .long, help: "Xcode scheme to build.")
   var scheme: String
 
@@ -29,6 +31,7 @@ struct RenderAllCommand: ParsableCommand {
     let prepared = try PreparationStore.load(sourceRoot: projectInfo.sourceRoot)
     try PreparationStore.validate(prepared, project: projectInfo, scheme: scheme)
 
+    let report: (String) -> Void = globalOptions.json ? { _ in } : { print($0) }
     let request = RenderAllRequest(
       scheme: scheme,
       projectInfo: projectInfo,
@@ -41,10 +44,20 @@ struct RenderAllCommand: ParsableCommand {
       locale: locale,
       verbose: verbose
     )
-    let result = try Self.perform(request: request, report: { print($0) })
-    print("[4/4] Done (\(result.elapsed)s).\n")
-    for path in result.imagePaths {
-      print("  \(path)")
+    let result = try Self.perform(request: request, report: report)
+
+    if globalOptions.json {
+      let data = RenderAllJSONData(
+        previewCount: result.imagePaths.count,
+        imagePaths: result.imagePaths,
+        elapsed: result.elapsed
+      )
+      print(JSONOutput.success(command: "render-all", data: data))
+    } else {
+      print("[4/4] Done (\(result.elapsed)s).\n")
+      for path in result.imagePaths {
+        print("  \(path)")
+      }
     }
   }
 }
@@ -154,4 +167,10 @@ extension RenderAllCommand {
 
     return RenderAllResult(imagePaths: finalized.imagePaths, elapsed: elapsed)
   }
+}
+
+struct RenderAllJSONData: Encodable {
+  let previewCount: Int
+  let imagePaths: [String]
+  let elapsed: String
 }

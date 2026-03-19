@@ -7,6 +7,8 @@ struct ListCommand: ParsableCommand {
     abstract: "List all discovered #Preview blocks that snapview can render."
   )
 
+  @OptionGroup var globalOptions: GlobalOptions
+
   @Option(name: .long) var project: String?
   @Option(name: .long) var workspace: String?
 
@@ -17,6 +19,13 @@ struct ListCommand: ParsableCommand {
     let entries = RenderCommand.scanProject(
       sourceRoot: projectInfo.sourceRoot, appName: projectInfo.appName
     )
+
+    if globalOptions.json {
+      let items = entries.map { ListJSONEntry(name: $0.name, filePath: $0.filePath) }
+      let data = ListJSONData(previewCount: entries.count, previews: items)
+      print(JSONOutput.success(command: "list", data: data))
+      return
+    }
 
     if entries.isEmpty {
       print(RenderMessaging.noPreviewsFoundList())
@@ -32,4 +41,14 @@ struct ListCommand: ParsableCommand {
       }
     }
   }
+}
+
+struct ListJSONEntry: Encodable {
+  let name: String
+  let filePath: String
+}
+
+struct ListJSONData: Encodable {
+  let previewCount: Int
+  let previews: [ListJSONEntry]
 }

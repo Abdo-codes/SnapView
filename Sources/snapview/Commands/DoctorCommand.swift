@@ -7,6 +7,8 @@ struct DoctorCommand: ParsableCommand {
     abstract: "Inspect project health for snapview rendering prerequisites."
   )
 
+  @OptionGroup var globalOptions: GlobalOptions
+
   @Option(name: .long, help: "Xcode scheme to inspect.")
   var scheme: String
 
@@ -21,7 +23,19 @@ struct DoctorCommand: ParsableCommand {
       testTarget: testTarget
     )
     let health = try Self.health(projectInfo: projectInfo, scheme: scheme)
-    print(DoctorCommandRenderer.render(health))
+
+    if globalOptions.json {
+      let data = DoctorJSONData(
+        scheme: health.scheme,
+        previewCount: health.previewCount,
+        outputWritable: health.outputWritable,
+        healthy: health.isHealthy,
+        findings: health.findings
+      )
+      print(JSONOutput.success(command: "doctor", data: data))
+    } else {
+      print(DoctorCommandRenderer.render(health))
+    }
   }
 
   static func health(projectInfo: ProjectInfo, scheme: String) throws -> ProjectHealth {
@@ -108,4 +122,12 @@ enum DoctorCommandRenderer {
 
     return lines.joined(separator: "\n")
   }
+}
+
+struct DoctorJSONData: Encodable {
+  let scheme: String
+  let previewCount: Int
+  let outputWritable: Bool
+  let healthy: Bool
+  let findings: [HealthFinding]
 }
