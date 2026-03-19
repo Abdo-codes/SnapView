@@ -18,10 +18,10 @@ enum HostRunner {
   }
 
   static func startArguments(prepared: PreparedRenderState) -> [String] {
-    BuildRunner.testWithoutBuildingArguments(
+    startArguments(
       xctestrunPath: prepared.xctestrunPath,
       destinationSpecifier: prepared.destinationSpecifier,
-      onlyTesting: "\(prepared.testTargetName)/SnapViewRenderer/test_host"
+      testTargetName: prepared.testTargetName
     )
   }
 
@@ -49,10 +49,10 @@ enum HostRunner {
 
     let process = Process()
     process.executableURL = URL(filePath: "/usr/bin/xcrun")
-    process.arguments = BuildRunner.testWithoutBuildingArguments(
+    process.arguments = startArguments(
       xctestrunPath: scopedXCTestRunPath,
       destinationSpecifier: prepared.destinationSpecifier,
-      onlyTesting: "\(prepared.testTargetName)/SnapViewRenderer/test_host"
+      testTargetName: prepared.testTargetName
     )
     process.standardOutput = logHandle
     process.standardError = logHandle
@@ -121,5 +121,17 @@ enum HostRunner {
       return "see \(path)"
     }
     return contents
+  }
+
+  private static func startArguments(
+    xctestrunPath: String,
+    destinationSpecifier: String,
+    testTargetName: String
+  ) -> [String] {
+    BuildRunner.testWithoutBuildingArguments(
+      xctestrunPath: xctestrunPath,
+      destinationSpecifier: destinationSpecifier,
+      onlyTesting: "\(testTargetName)/SnapViewRenderer/test_host"
+    )
   }
 }

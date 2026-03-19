@@ -39,46 +39,22 @@ struct HostStartCommand: ParsableCommand {
       throw CleanExit.message("[snapview:error] Not initialized. Run: snapview init --scheme \(scheme)")
     }
 
-    if let existing = try HostStore.loadIfPresent(sourceRoot: projectInfo.sourceRoot) {
-      if HostStore.isActive(existing) {
-        print("Persistent host is already running (pid \(existing.pid)).")
-        print("Log: \(existing.logPath)")
-        return
-      }
-      try? HostRunner.stop(existing, timeout: 1)
-      try? HostStore.remove(sourceRoot: projectInfo.sourceRoot)
-    }
-
-    let runtimeDirectory = HostRuntime.hostRuntimeDirectory(for: prepared)
-    let logPath = "\(projectInfo.sourceRoot)/.snapview/host.log"
-    try HostRuntime.prepare(runtimeDirectory: runtimeDirectory)
-
-    let pid = try HostRunner.start(
+    let result = try HostSupervisor.ensureRunning(
       prepared: prepared,
-      runtimeDirectory: runtimeDirectory,
-      logPath: logPath
+      sourceRoot: projectInfo.sourceRoot,
+      existingHost: try HostStore.loadIfPresent(sourceRoot: projectInfo.sourceRoot)
     )
-    let state = HostedRenderState(
-      scheme: scheme,
-      projectPath: projectInfo.projectPath,
-      testTargetName: projectInfo.testTargetName,
-      runtimeDirectory: runtimeDirectory,
-      logPath: logPath,
-      pid: pid
-    )
-    try HostStore.save(state, sourceRoot: projectInfo.sourceRoot)
 
-    do {
-      try HostRunner.waitUntilReady(state, timeout: 15)
-    } catch {
-      try? HostRunner.stop(state, timeout: 1)
-      try? HostStore.remove(sourceRoot: projectInfo.sourceRoot)
-      throw error
+    switch result.decision {
+    case .reuse:
+      print("Persistent host is already running (pid \(result.state.pid)).")
+    case .start:
+      print("Persistent host is ready.")
+    case .restart:
+      print("Persistent host was restarted.")
     }
-
-    print("Persistent host is ready.")
-    print("PID: \(pid)")
-    print("Log: \(logPath)")
+    print("PID: \(result.state.pid)")
+    print("Log: \(result.state.logPath)")
   }
 }
 

@@ -7,7 +7,57 @@ struct HostedRenderState: Codable, Equatable {
   let testTargetName: String
   let runtimeDirectory: String
   let logPath: String
+  let destinationSpecifier: String
+  let xctestrunPath: String
+  let preparedAt: Date
   let pid: Int
+
+  private enum CodingKeys: String, CodingKey {
+    case scheme
+    case projectPath
+    case testTargetName
+    case runtimeDirectory
+    case logPath
+    case destinationSpecifier
+    case xctestrunPath
+    case preparedAt
+    case pid
+  }
+
+  init(
+    scheme: String,
+    projectPath: String,
+    testTargetName: String,
+    runtimeDirectory: String,
+    logPath: String,
+    destinationSpecifier: String,
+    xctestrunPath: String,
+    preparedAt: Date,
+    pid: Int
+  ) {
+    self.scheme = scheme
+    self.projectPath = projectPath
+    self.testTargetName = testTargetName
+    self.runtimeDirectory = runtimeDirectory
+    self.logPath = logPath
+    self.destinationSpecifier = destinationSpecifier
+    self.xctestrunPath = xctestrunPath
+    self.preparedAt = preparedAt
+    self.pid = pid
+  }
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    scheme = try container.decode(String.self, forKey: .scheme)
+    projectPath = try container.decode(String.self, forKey: .projectPath)
+    testTargetName = try container.decode(String.self, forKey: .testTargetName)
+    runtimeDirectory = try container.decode(String.self, forKey: .runtimeDirectory)
+    logPath = try container.decode(String.self, forKey: .logPath)
+    destinationSpecifier = try container.decodeIfPresent(String.self, forKey: .destinationSpecifier) ?? ""
+    xctestrunPath = try container.decodeIfPresent(String.self, forKey: .xctestrunPath) ?? ""
+    preparedAt = try container.decodeIfPresent(Date.self, forKey: .preparedAt) ?? .distantPast
+    pid = try container.decode(Int.self, forKey: .pid)
+  }
 }
 
 enum HostStore {

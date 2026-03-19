@@ -144,6 +144,9 @@ private extension HostedRenderState {
     testTargetName: String = "AppTests",
     runtimeDirectory: String = "/tmp/App/.snapview/runtime/host",
     logPath: String = "/tmp/App/.snapview/host.log",
+    destinationSpecifier: String = "platform=iOS Simulator,name=iPhone 15",
+    xctestrunPath: String = "/tmp/App/.snapview/AppTests.xctestrun",
+    preparedAt: Date = .distantPast,
     pid: Int = 42
   ) -> Self {
     HostedRenderState(
@@ -152,6 +155,9 @@ private extension HostedRenderState {
       testTargetName: testTargetName,
       runtimeDirectory: runtimeDirectory,
       logPath: logPath,
+      destinationSpecifier: destinationSpecifier,
+      xctestrunPath: xctestrunPath,
+      preparedAt: preparedAt,
       pid: pid
     )
   }
@@ -175,7 +181,8 @@ private extension PreparedRenderState {
     testTargetName: String = "AppTests",
     destinationSpecifier: String = "platform=iOS Simulator,name=iPhone 15",
     derivedDataPath: String = "/tmp/App/.snapview/DerivedData",
-    xctestrunPath: String = "/tmp/App/.snapview/AppTests.xctestrun"
+    xctestrunPath: String = "/tmp/App/.snapview/AppTests.xctestrun",
+    preparedAt: Date = .distantPast
   ) -> Self {
     PreparedRenderState(
       scheme: scheme,
@@ -184,7 +191,8 @@ private extension PreparedRenderState {
       testTargetName: testTargetName,
       destinationSpecifier: destinationSpecifier,
       derivedDataPath: derivedDataPath,
-      xctestrunPath: xctestrunPath
+      xctestrunPath: xctestrunPath,
+      preparedAt: preparedAt
     )
   }
 }

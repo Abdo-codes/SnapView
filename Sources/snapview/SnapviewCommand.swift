@@ -8,6 +8,7 @@ struct Snapview: ParsableCommand {
     subcommands: [
       InitCommand.self,
       DoctorCommand.self,
+      GalleryCommand.self,
       PrepareCommand.self,
       HostCommand.self,
       RenderCommand.self,

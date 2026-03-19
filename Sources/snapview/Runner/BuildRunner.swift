@@ -109,7 +109,8 @@ enum BuildRunner {
       testTargetName: project.testTargetName,
       destinationSpecifier: destination.destinationSpecifier,
       derivedDataPath: derivedDataPath,
-      xctestrunPath: xctestrunPath
+      xctestrunPath: xctestrunPath,
+      preparedAt: Date()
     )
   }
 

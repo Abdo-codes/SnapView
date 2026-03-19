@@ -63,7 +63,11 @@ struct RenderCommand: ParsableCommand {
     )
     let renderedOutputPath: String
 
-    if let state = try HostStore.loadActive(sourceRoot: projectInfo.sourceRoot) {
+    if let state = try HostSupervisor.reusableHost(
+      prepared: prepared,
+      sourceRoot: projectInfo.sourceRoot,
+      existingHost: try HostStore.loadIfPresent(sourceRoot: projectInfo.sourceRoot)
+    ) {
       print("[3/4] Rendering through persistent host...")
       do {
         let response = try HostRuntime.requestRender(
@@ -79,7 +83,6 @@ struct RenderCommand: ParsableCommand {
         throw error
       } catch {
         print("       Host unavailable, falling back to cached test bundle...")
-        try? HostStore.remove(sourceRoot: projectInfo.sourceRoot)
         renderedOutputPath = try BuildRunner.runPrepared(options: options, prepared: prepared)
       }
     } else {
@@ -94,11 +97,25 @@ struct RenderCommand: ParsableCommand {
       renderedOutputPath: renderedOutputPath,
       outputDir: outputDir
     )
-    if case let .reused(_, error) = finalized {
+    if finalized.usedRuntimeFallback {
       print("       Warning: couldn't copy PNGs to \(outputDir); using runtime output instead.")
-      print("       \(error.localizedDescription)")
+      for warning in finalized.warnings {
+        print("       \(warning)")
+      }
     }
-    let paths = finalized.paths
+    let paths = finalized.imagePaths
+    let galleryEntries = Self.galleryEntries(
+      from: matched,
+      finalized: finalized,
+      updatedAt: Date()
+    )
+    _ = try GalleryStore.persist(
+      entries: galleryEntries,
+      projectPath: projectInfo.projectPath,
+      scheme: scheme,
+      sourceRoot: projectInfo.sourceRoot,
+      mergeWithExisting: true
+    )
     print("[4/4] Done (\(elapsed)s).\n")
 
     for path in paths {
@@ -136,5 +153,30 @@ struct RenderCommand: ParsableCommand {
       entries.append(contentsOf: fileEntries)
     }
     return entries
+  }
+
+  static func galleryEntries(
+    from previewEntries: [PreviewEntry],
+    finalized: FinalizedRenderOutput,
+    updatedAt: Date
+  ) -> [GalleryEntry] {
+    let imagePathsByName = Dictionary(uniqueKeysWithValues: finalized.imagePaths.map { path in
+      (URL(filePath: path).deletingPathExtension().lastPathComponent, path)
+    })
+
+    return previewEntries.compactMap { entry in
+      guard let imagePath = imagePathsByName[entry.name] else {
+        return nil
+      }
+
+      return GalleryEntry(
+        previewName: entry.name,
+        sourceFile: entry.filePath,
+        imagePath: imagePath,
+        source: finalized.usedRuntimeFallback ? .runtimeFallback : .copied,
+        warnings: finalized.warnings,
+        updatedAt: updatedAt
+      )
+    }
   }
 }

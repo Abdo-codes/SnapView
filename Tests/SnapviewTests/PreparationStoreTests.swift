@@ -18,7 +18,8 @@ struct PreparationStoreTests {
       testTargetName: "DemoTests",
       destinationSpecifier: "platform=iOS Simulator,OS=17.5,name=iPhone 15",
       derivedDataPath: tempRoot.appendingPathComponent("DerivedData").path,
-      xctestrunPath: tempRoot.appendingPathComponent("DemoTests.xctestrun").path
+      xctestrunPath: tempRoot.appendingPathComponent("DemoTests.xctestrun").path,
+      preparedAt: Date(timeIntervalSince1970: 1_000)
     )
 
     try PreparationStore.save(state, sourceRoot: tempRoot.path)

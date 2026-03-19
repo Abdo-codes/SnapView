@@ -44,7 +44,8 @@ struct BuildRunnerPreparationTests {
       testTargetName: "DemoTests",
       destinationSpecifier: "platform=iOS Simulator,OS=17.5,name=iPhone 15",
       derivedDataPath: "/tmp/Demo/.snapview/DerivedData",
-      xctestrunPath: "/tmp/Demo/.snapview/DerivedData/Build/Products/Demo_iphonesimulator17.5-arm64.xctestrun"
+      xctestrunPath: "/tmp/Demo/.snapview/DerivedData/Build/Products/Demo_iphonesimulator17.5-arm64.xctestrun",
+      preparedAt: Date(timeIntervalSince1970: 1_000)
     )
 
     let args = BuildRunner.testWithoutBuildingArguments(
