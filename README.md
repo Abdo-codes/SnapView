@@ -18,16 +18,16 @@ When you ask an AI to build a SwiftUI view, it has no way to see what the result
 
 ## Install
 
-Until there is a packaged release channel, install from source:
+You can either download the latest macOS release asset from GitHub Releases or build from source.
+
+Source install:
 
 ```sh
-git clone <repo-url>
-cd snapview
+git clone https://github.com/Abdo-codes/SnapView.git
+cd SnapView
 swift build -c release
-cp .build/release/snapview /usr/local/bin/
+install "$(swift build -c release --show-bin-path)/snapview" /usr/local/bin/snapview
 ```
-
-Replace `<repo-url>` with the public GitHub repository URL once the project is published.
 
 ## Quick Start
 
@@ -154,19 +154,19 @@ Common recovery paths:
 - `render` fails after switching projects, schemes, or test targets:
   the prepared metadata is stale. Rerun `snapview prepare --scheme <Scheme>`.
 
-More detail: [Troubleshooting Guide](/Users/abdoelrhman/Developer/side/snapview/docs/troubleshooting.md)
+More detail: [Troubleshooting Guide](docs/troubleshooting.md)
 
 ## Contributing
 
-Contributions are welcome. Start with [CONTRIBUTING.md](/Users/abdoelrhman/Developer/side/snapview/CONTRIBUTING.md) for local setup, verification expectations, and PR scope.
+Contributions are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md) for local setup, verification expectations, and PR scope.
 
 ## Security
 
-For sensitive reports, use the private process in [SECURITY.md](/Users/abdoelrhman/Developer/side/snapview/SECURITY.md) instead of opening a public issue.
+For sensitive reports, use the private process in [SECURITY.md](SECURITY.md) instead of opening a public issue.
 
 ## License
 
-`snapview` is released under the [MIT License](/Users/abdoelrhman/Developer/side/snapview/LICENSE).
+`snapview` is released under the [MIT License](LICENSE).
 
 ## Known Limitations
 
