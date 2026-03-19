@@ -28,6 +28,14 @@ stop_host() {
   fi
 }
 
+start_watch() {
+  if [ -n "$test_target" ]; then
+    script -qF "$watch_log" "$snapview_bin" watch "$input_flag" "$input_path" --scheme "$scheme" --test-target "$test_target" >/dev/null 2>&1
+  else
+    script -qF "$watch_log" "$snapview_bin" watch "$input_flag" "$input_path" --scheme "$scheme" >/dev/null 2>&1
+  fi
+}
+
 cleanup() {
   if [ -n "${watch_pid:-}" ]; then
     kill "$watch_pid" 2>/dev/null || true
@@ -151,18 +159,12 @@ if [ "$found_png" -eq 0 ]; then
   exit 1
 fi
 
-trap cleanup EXIT INT TERM
-
 if [ "$watch_requested" -eq 1 ]; then
   watch_log=$(mktemp "${TMPDIR:-/tmp}/snapview-watch.XXXXXX")
   : > "$watch_log"
 
   printf '==> watch\n'
-  if [ -n "$test_target" ]; then
-    "$snapview_bin" watch "$input_flag" "$input_path" --scheme "$scheme" --test-target "$test_target" >"$watch_log" 2>&1 &
-  else
-    "$snapview_bin" watch "$input_flag" "$input_path" --scheme "$scheme" >"$watch_log" 2>&1 &
-  fi
+  start_watch &
   watch_pid=$!
 
   while :; do
@@ -171,6 +173,7 @@ if [ "$watch_requested" -eq 1 ]; then
     fi
 
     if ! kill -0 "$watch_pid" 2>/dev/null; then
+      cat "$watch_log"
       printf 'watch exited before emitting a refresh marker\n' >&2
       exit 1
     fi

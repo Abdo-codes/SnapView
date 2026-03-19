@@ -10,6 +10,7 @@ expected_test_target="${SMOKE_EXPECT_TEST_TARGET:-}"
 create_gallery="${SMOKE_CREATE_GALLERY:-1}"
 create_png="${SMOKE_CREATE_PNG:-1}"
 watch_exit_after_seconds="${SMOKE_WATCH_EXIT_AFTER_SECONDS:-5}"
+watch_requires_tty="${SMOKE_WATCH_REQUIRES_TTY:-0}"
 fail_render_all="${SMOKE_FAIL_RENDER_ALL:-0}"
 
 log_invocation() {
@@ -164,7 +165,9 @@ case "$command" in
       expect_exact_args_without_test_target watch "$@"
     fi
     log_invocation "$command" "$@"
-    printf '[watch] Updated 3 preview(s) in 1.0s.\n'
+    if [ "$watch_requires_tty" = "0" ] || [ -t 1 ]; then
+      printf '[watch] Updated 3 preview(s) in 1.0s.\n'
+    fi
     sleep "$watch_exit_after_seconds"
     ;;
   host)

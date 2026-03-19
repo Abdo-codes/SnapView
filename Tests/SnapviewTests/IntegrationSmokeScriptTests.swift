@@ -40,7 +40,10 @@ struct IntegrationSmokeScriptTests {
 
   @Test("watch mode waits for the first refresh marker before stopping host")
   func watchModeWaitsForFirstRefreshMarkerBeforeStoppingHost() throws {
-    let fixture = try SmokeFixture.make()
+    let fixture = try SmokeFixture.make(
+      watchExitAfterSeconds: "1",
+      watchRequiresTTY: true
+    )
     let startedAt = Date()
     let result = try fixture.run(
       arguments: [
@@ -140,6 +143,7 @@ private struct SmokeFixture {
   let galleryPath: String
   let pngPath: String
   let watchExitAfterSeconds: String
+  let watchRequiresTTY: Bool
   let createGallery: Bool
   let createPNG: Bool
   let failRenderAll: Bool
@@ -148,6 +152,7 @@ private struct SmokeFixture {
     createGallery: Bool = true,
     createPNG: Bool = true,
     watchExitAfterSeconds: String = "5",
+    watchRequiresTTY: Bool = false,
     failRenderAll: Bool = false
   ) throws -> SmokeFixture {
     let fm = FileManager.default
@@ -178,6 +183,7 @@ private struct SmokeFixture {
       galleryPath: galleryPath,
       pngPath: pngPath,
       watchExitAfterSeconds: watchExitAfterSeconds,
+      watchRequiresTTY: watchRequiresTTY,
       createGallery: createGallery,
       createPNG: createPNG,
       failRenderAll: failRenderAll
@@ -196,6 +202,7 @@ private struct SmokeFixture {
     environment["SMOKE_CREATE_GALLERY"] = createGallery ? "1" : "0"
     environment["SMOKE_CREATE_PNG"] = createPNG ? "1" : "0"
     environment["SMOKE_WATCH_EXIT_AFTER_SECONDS"] = watchExitAfterSeconds
+    environment["SMOKE_WATCH_REQUIRES_TTY"] = watchRequiresTTY ? "1" : "0"
     environment["SMOKE_FAIL_RENDER_ALL"] = failRenderAll ? "1" : "0"
 
     let result = try ProcessRunner.run(
