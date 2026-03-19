@@ -43,6 +43,18 @@ snapview gallery
 
 `watch` is the default local loop. It bootstraps missing or stale prepared artifacts, keeps the persistent host aligned with the latest build, rerenders previews after Swift changes, and refreshes `.snapview/gallery.html`.
 
+## Smoke Workflow
+
+Use the integration smoke script to verify a real project end to end:
+
+```sh
+scripts/integration-smoke.sh \
+  --scheme MyApp \
+  --project /path/to/MyApp.xcodeproj
+```
+
+Use `--workspace /path/to/MyApp.xcworkspace` instead of `--project` when the app is built from a workspace. Add `--watch` when you want the script to wait for one successful preview refresh before exiting. Set `SNAPVIEW_BIN` to point the script at a specific snapview binary instead of the default `.build/debug/snapview`.
+
 If you want the explicit primitives, they still exist:
 
 ```sh
