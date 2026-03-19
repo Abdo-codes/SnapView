@@ -38,14 +38,49 @@ enum BuildRunner {
     var description: String {
       switch self {
       case .buildFailed(let code, let output):
-        let firstLine = output.split(separator: "\n").first.map(String.init) ?? "unknown"
-        return "[snapview:error] xcodebuild failed (exit \(code)): \(firstLine)"
+        return "[snapview:error] xcodebuild failed (exit \(code)): \(BuildRunner.failureSummary(from: output))"
       case .noSimulatorDestination(let scheme):
         return "[snapview:error] No simulator destination found for scheme '\(scheme)'."
       case .xctestrunNotFound(let path):
         return "[snapview:error] No .xctestrun file found under \(path)."
       }
     }
+  }
+
+  static func failureSummary(from output: String) -> String {
+    let lines = output
+      .components(separatedBy: .newlines)
+      .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+      .filter { !$0.isEmpty }
+
+    if let actionableLine = lines.first(where: isActionableFailureLine(_:)) {
+      return actionableLine
+    }
+
+    if let fallbackLine = lines.first(where: { !isBoilerplateFailureLine($0) }) {
+      return fallbackLine
+    }
+
+    return lines.first ?? "unknown"
+  }
+
+  private static func isActionableFailureLine(_ line: String) -> Bool {
+    line.contains(": error:")
+      || line.hasPrefix("error:")
+      || line.contains(" failed - ")
+      || line.contains(" failed:")
+  }
+
+  private static func isBoilerplateFailureLine(_ line: String) -> Bool {
+    line == "Command line invocation:"
+      || line == "Build settings from command line:"
+      || line == "Testing started"
+      || line == "** TEST EXECUTE FAILED **"
+      || line.hasPrefix("/Applications/Xcode")
+      || line.hasPrefix("CODE_SIGNING_ALLOWED =")
+      || line.hasPrefix("--- xcodebuild: WARNING:")
+      || line.contains("[MT] IDERunDestination:")
+      || line.hasPrefix("Test session results, code coverage, and logs:")
   }
 
   static func run(options: Options) throws {
