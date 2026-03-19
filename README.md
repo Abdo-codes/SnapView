@@ -18,12 +18,16 @@ When you ask an AI to build a SwiftUI view, it has no way to see what the result
 
 ## Install
 
+Until there is a packaged release channel, install from source:
+
 ```sh
-git clone https://github.com/yourname/snapview
+git clone <repo-url>
 cd snapview
 swift build -c release
 cp .build/release/snapview /usr/local/bin/
 ```
+
+Replace `<repo-url>` with the public GitHub repository URL once the project is published.
 
 ## Quick Start
 
@@ -151,6 +155,18 @@ Common recovery paths:
   the prepared metadata is stale. Rerun `snapview prepare --scheme <Scheme>`.
 
 More detail: [Troubleshooting Guide](/Users/abdoelrhman/Developer/side/snapview/docs/troubleshooting.md)
+
+## Contributing
+
+Contributions are welcome. Start with [CONTRIBUTING.md](/Users/abdoelrhman/Developer/side/snapview/CONTRIBUTING.md) for local setup, verification expectations, and PR scope.
+
+## Security
+
+For sensitive reports, use the private process in [SECURITY.md](/Users/abdoelrhman/Developer/side/snapview/SECURITY.md) instead of opening a public issue.
+
+## License
+
+`snapview` is released under the [MIT License](/Users/abdoelrhman/Developer/side/snapview/LICENSE).
 
 ## Known Limitations
 
