@@ -1,12 +1,13 @@
 import ArgumentParser
+import Foundation
 
 struct RenderCommand: ParsableCommand {
   static let configuration = CommandConfiguration(
     commandName: "render",
-    abstract: "Render previews matching a view name or preview name."
+    abstract: "Render #Preview entries matching a view name or preview name."
   )
 
-  @Argument(help: "View name or preview name to render.")
+  @Argument(help: "View name or preview name to render. The view must be covered by a #Preview.")
   var viewName: String
 
   @Option(name: .long, help: "Xcode scheme to build.")
@@ -24,6 +25,116 @@ struct RenderCommand: ParsableCommand {
   @Flag(name: .long) var verbose = false
 
   func run() throws {
-    print("render not yet implemented")
+    let projectInfo = try ProjectDetector.detect(
+      projectPath: project, workspacePath: workspace, testTarget: testTarget
+    )
+    try ProjectValidator.validateRenderPrerequisites(project: projectInfo, scheme: scheme)
+    let prepared = try PreparationStore.load(sourceRoot: projectInfo.sourceRoot)
+    try PreparationStore.validate(prepared, project: projectInfo, scheme: scheme)
+
+    // Verify init was run
+    let rendererPath = "\(projectInfo.sourceRoot)/\(projectInfo.testTargetName)/SnapViewRenderer.swift"
+    guard FileManager.default.fileExists(atPath: rendererPath) else {
+      throw CleanExit.message("[snapview:error] Not initialized. Run: snapview init --scheme \(scheme)")
+    }
+
+    let (width, height) = Self.deviceDimensions(device)
+
+    // Step 1: Scan for previews
+    print("[1/4] Scanning for #Preview blocks matching \"\(viewName)\"...")
+    let allEntries = Self.scanProject(sourceRoot: projectInfo.sourceRoot, appName: projectInfo.appName)
+    let matched = PreviewMatcher.match(viewName: viewName, entries: allEntries)
+
+    guard !matched.isEmpty else {
+      throw CleanExit.message(RenderMessaging.previewNotFound(viewName: viewName))
+    }
+
+    let names = matched.map(\.name).joined(separator: ", ")
+    print("       Found: \(matched[0].filePath) → \(names)")
+
+    print("[2/4] Loading prepared test artifacts...")
+    print("       \(prepared.destinationSpecifier)")
+
+    let startTime = Date()
+    let options = BuildRunner.Options(
+      scheme: scheme, project: projectInfo, viewNames: matched.map(\.name),
+      scale: scale, width: width, height: height,
+      rtl: rtl, locale: locale, simulator: simulator, verbose: verbose
+    )
+    let renderedOutputPath: String
+
+    if let state = try HostStore.loadActive(sourceRoot: projectInfo.sourceRoot) {
+      print("[3/4] Rendering through persistent host...")
+      do {
+        let response = try HostRuntime.requestRender(
+          .init(viewNames: matched.map(\.name), options: options),
+          runtimeDirectory: state.runtimeDirectory,
+          timeout: 15
+        )
+        if let errorMessage = response.errorMessage {
+          throw CleanExit.message("[snapview:error] \(errorMessage)")
+        }
+        renderedOutputPath = HostRuntime.outputDirectory(runtimeDirectory: state.runtimeDirectory)
+      } catch let error as CleanExit {
+        throw error
+      } catch {
+        print("       Host unavailable, falling back to cached test bundle...")
+        try? HostStore.remove(sourceRoot: projectInfo.sourceRoot)
+        renderedOutputPath = try BuildRunner.runPrepared(options: options, prepared: prepared)
+      }
+    } else {
+      print("[3/4] Running cached test bundle...")
+      renderedOutputPath = try BuildRunner.runPrepared(options: options, prepared: prepared)
+    }
+    let elapsed = String(format: "%.1f", Date().timeIntervalSince(startTime))
+
+    // Step 4: Extract PNGs
+    let outputDir = "\(projectInfo.sourceRoot)/\(output)"
+    let finalized = try RenderedOutputFinalizer.finalize(
+      renderedOutputPath: renderedOutputPath,
+      outputDir: outputDir
+    )
+    if case let .reused(_, error) = finalized {
+      print("       Warning: couldn't copy PNGs to \(outputDir); using runtime output instead.")
+      print("       \(error.localizedDescription)")
+    }
+    let paths = finalized.paths
+    print("[4/4] Done (\(elapsed)s).\n")
+
+    for path in paths {
+      print("  \(path)")
+    }
+  }
+
+  // MARK: - Shared Utilities
+
+  static func deviceDimensions(_ device: String) -> (Double, Double) {
+    switch device {
+    case "iPhone15Pro": return (393, 852)
+    case "iPhoneSE": return (375, 667)
+    case "iPadPro": return (1024, 1366)
+    default:
+      if device.hasPrefix("custom:") {
+        let parts = device.dropFirst(7).split(separator: "x").compactMap { Double($0) }
+        if parts.count == 2 { return (parts[0], parts[1]) }
+      }
+      return (393, 852)
+    }
+  }
+
+  static func scanProject(sourceRoot: String, appName: String) -> [PreviewEntry] {
+    let fm = FileManager.default
+    let appDir = "\(sourceRoot)/\(appName)"
+    guard let enumerator = fm.enumerator(atPath: appDir) else { return [] }
+
+    var entries: [PreviewEntry] = []
+    while let file = enumerator.nextObject() as? String {
+      guard file.hasSuffix(".swift") else { continue }
+      let fullPath = "\(appDir)/\(file)"
+      guard let source = try? String(contentsOfFile: fullPath, encoding: .utf8) else { continue }
+      let fileEntries = PreviewScanner.scan(source: source, filePath: file)
+      entries.append(contentsOf: fileEntries)
+    }
+    return entries
   }
 }

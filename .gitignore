@@ -1,0 +1,6 @@
+.build/
+.swiftpm/
+.snapview/
+*.xcodeproj/xcuserdata/
+DerivedData/
+.worktrees/
